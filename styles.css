@@ -361,7 +361,7 @@ body.light .reward-pts{-webkit-text-fill-color:#c2410c;background:none;color:#c2
 body.light .brand-mark,body.light .quote-mark{color:#c2410c}
 body.light .quote-card{background:linear-gradient(135deg,#fff7e8,#ffffff);border-color:#f0e3c4}
 body.light .ex-row.filled{background:#fff6e4;border-color:var(--amber)}
-body.light .kpi.gold,body.light .mk.gold{background:linear-gradient(135deg,#fff3df,#ffffff);border-color:#f0e3c4}
+body.light .kpi.gold,body.light .mk.gold{background:#fff6e9;border-color:#f0e3c4}
 body.light .mk.gold b{color:#c2410c}
 body.light .trend-bar{background:linear-gradient(180deg,#ffb347,var(--amber))}
 body.light .topbar{background:rgba(238,241,245,.85)}
