@@ -1,0 +1,27 @@
+<!-- TackT — Supabase "Confirm signup" template. Paste into:
+     Supabase → Authentication → Email Templates → Confirm signup (Message body, HTML).
+     Variable {{ .ConfirmationURL }} is filled by Supabase. -->
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#0f1115;padding:32px 12px;font-family:Helvetica,Arial,sans-serif">
+  <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:440px;background:#171a21;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:36px 32px">
+      <tr><td align="center" style="padding-bottom:20px">
+        <img src="https://gettackt.com/app/icon-192.png" width="56" height="56" alt="TackT" style="border-radius:14px;display:block">
+      </td></tr>
+      <tr><td align="center" style="color:#f4f5f7;font-size:22px;font-weight:800;padding-bottom:10px">Confirm your email</td></tr>
+      <tr><td align="center" style="color:#aab1bd;font-size:15px;line-height:1.6;padding-bottom:26px">
+        Welcome to TackT — let's get you back in the groove. Tap below to confirm your email and start logging.
+      </td></tr>
+      <tr><td align="center" style="padding-bottom:26px">
+        <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#f5a623;color:#0f1115;font-size:16px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:12px">Confirm my email</a>
+      </td></tr>
+      <tr><td align="center" style="color:#6b7280;font-size:12px;line-height:1.6;padding-bottom:22px">
+        If the button doesn't work, paste this link into your browser:<br>
+        <a href="{{ .ConfirmationURL }}" style="color:#ffc457;word-break:break-all">{{ .ConfirmationURL }}</a>
+      </td></tr>
+      <tr><td align="center" style="color:#6b7280;font-size:12px;line-height:1.6;border-top:1px solid rgba(255,255,255,0.08);padding-top:20px">
+        Didn't sign up? You can safely ignore this email.<br>
+        TackT &middot; <a href="https://gettackt.com" style="color:#6b7280">gettackt.com</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
