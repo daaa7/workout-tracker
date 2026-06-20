@@ -48,6 +48,10 @@
       <span>New version ready</span>
       <button id="update-btn">Update now</button>
     </div>
+    <div id="demo-bar" class="demo-bar hidden">
+      <span>👁 Demo data — not saved</span>
+      <button id="demo-off">Turn off</button>
+    </div>
     <header class="topbar">
       <div class="brand-sm"><span class="brand-mark">◆</span> GROOVE</div>
       <div class="topbar-right">
@@ -134,17 +138,35 @@
 
       <!-- ===== CALENDAR ===== -->
       <div id="view-cal" class="view hidden">
-        <div class="cal-head">
-          <button id="cal-prev" class="iconbtn">‹</button>
-          <div class="cal-title" id="cal-title">—</div>
-          <button id="cal-next" class="iconbtn">›</button>
+        <div class="seg calmode" id="cal-mode">
+          <button data-cm="month" class="seg-btn active">Month</button>
+          <button data-cm="year" class="seg-btn">Year</button>
         </div>
-        <button id="cal-today" class="btn btn-ghost btn-sm">Today</button>
-        <div class="cal-dow">
-          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+
+        <div id="cal-month">
+          <div class="cal-head">
+            <button id="cal-prev" class="iconbtn">‹</button>
+            <div class="cal-title" id="cal-title">—</div>
+            <button id="cal-next" class="iconbtn">›</button>
+          </div>
+          <button id="cal-today" class="btn btn-ghost btn-sm">Today</button>
+          <div class="cal-dow">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div id="cal-grid" class="cal-grid"></div>
+          <div class="cal-legend"><span class="dot-have"></span> logged day &nbsp;·&nbsp; tap any day to add or edit</div>
         </div>
-        <div id="cal-grid" class="cal-grid"></div>
-        <div class="cal-legend"><span class="dot-have"></span> logged day &nbsp;·&nbsp; tap any day to add or edit</div>
+
+        <div id="cal-year" class="hidden">
+          <div class="cal-head">
+            <button id="yr-prev" class="iconbtn">‹</button>
+            <div class="cal-title" id="yr-title">—</div>
+            <button id="yr-next" class="iconbtn">›</button>
+          </div>
+          <div class="yr-summary" id="yr-summary"></div>
+          <div class="yr-scroll"><div class="yr-months" id="yr-months"></div><div class="yr-grid" id="yr-grid"></div></div>
+          <div class="cal-legend">Less <span class="yr-leg l1"></span><span class="yr-leg l2"></span><span class="yr-leg l3"></span><span class="yr-leg l4"></span> More &nbsp;·&nbsp; tap a day</div>
+        </div>
       </div>
 
       <!-- ===== STATS ===== -->
@@ -293,6 +315,13 @@
           <div class="set-sub">Type things like AMRAP or 8-12; plain numbers still save as numbers</div>
         </div>
         <button id="set-textreps" class="switch" role="switch" aria-checked="false"><span></span></button>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Demo data (preview)
+          <div class="set-sub">Fill the app with a sample year to see how it looks — never saved, toggle off for your real data</div>
+        </div>
+        <button id="set-demo" class="switch" role="switch" aria-checked="false"><span></span></button>
       </div>
 
       <div class="set-row">

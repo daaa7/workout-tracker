@@ -14,6 +14,10 @@ let USER = null;
 let STATE = { logs: [], exercises: [] }; // logs: rows, exercises: dict rows
 let DICT = {}; // abbr -> {name, category}
 let calCursor = null; // Date for the visible calendar month
+let calMode = "month";
+let yearCursor = new Date().getFullYear();
+let DEMO = false, REAL_STATE = null;
+function demoToast() { toast("Demo mode is on — turn it off in Settings to make changes.", true); }
 
 /* ───────── preferences (device-level) ───────── */
 const PREFS_KEY = "groove_prefs";
@@ -91,7 +95,7 @@ const KINDS = [["strength", "Strength (reps×sets×lbs)"], ["cardio", "Cardio (d
    ════════════════════════════════════════════════════════════════ */
 const cacheKey = () => `wo_cache_${USER?.id}`;
 const pendKey = () => `wo_pending_${USER?.id}`;
-function saveCache() { try { localStorage.setItem(cacheKey(), JSON.stringify(STATE)); } catch (e) {} }
+function saveCache() { if (DEMO) return; try { localStorage.setItem(cacheKey(), JSON.stringify(STATE)); } catch (e) {} }
 function loadCache() { try { return JSON.parse(localStorage.getItem(cacheKey())); } catch (e) { return null; } }
 function getPending() { try { return JSON.parse(localStorage.getItem(pendKey())) || []; } catch (e) { return []; } }
 function setPending(p) { localStorage.setItem(pendKey(), JSON.stringify(p)); }
@@ -190,6 +194,7 @@ async function seedDict() {
    WRITES
    ════════════════════════════════════════════════════════════════ */
 async function commitLogs(date, items) {
+  if (DEMO) return demoToast();
   const rows = items.map((it) => ({
     id: crypto.randomUUID(), user_id: USER.id, date,
     abbr: it.kind === "set" ? it.abbr : null,
@@ -217,12 +222,14 @@ async function insertLogRows(rows) {
   if (error) throw error;
 }
 async function upsertExercise(abbr, name, category, kind = "strength") {
+  if (DEMO) return demoToast();
   const row = { id: crypto.randomUUID(), user_id: USER.id, abbr, name, category, kind };
   STATE.exercises.push(row); rebuildDict(); saveCache();
   try { const { error } = await SB.from("wo_exercises").insert(row); if (error) throw error; }
   catch (e) { queue({ t: "insEx", row }); }
 }
 async function deleteLog(id) {
+  if (DEMO) return demoToast();
   STATE.logs = STATE.logs.filter((l) => l.id !== id);
   saveCache(); renderAll();
   try { const { error } = await SB.from("wo_logs").delete().eq("id", id); if (error) throw error; }
@@ -331,7 +338,7 @@ function moveLabel(l) {
   return s;
 }
 
-function renderAll() { renderLog(); renderCalendar(); renderStats(); }
+function renderAll() { renderLog(); renderCalendar(); if (calMode === "year") renderYear(); renderStats(); }
 
 function renderLog() {
   const st = computeStats();
@@ -432,6 +439,7 @@ function readDraft() { try { return JSON.parse(localStorage.getItem(draftKey()))
 function writeDraft(d) { try { localStorage.setItem(draftKey(), JSON.stringify(d)); } catch (e) {} }
 function clearDraft() { try { localStorage.removeItem(draftKey()); } catch (e) {} }
 function saveRowDraft(row) {
+  if (DEMO) return;
   const d = readDraft(), g = (s) => row.querySelector(s)?.value || "";
   const tap = row.querySelector(".set-tap");
   const e = { reps: g(".ex-reps"), sets: g(".ex-sets"), wt: g(".ex-wt"), dist: g(".ex-dist"), hr: g(".ex-hr"), min: g(".ex-min"), tap: tap ? +tap.dataset.count : 0 };
@@ -486,6 +494,7 @@ function sortedExercises() {
   });
 }
 function moveExercise(id, dir) {
+  if (DEMO) return demoToast();
   const list = sortedExercises();
   const i = list.findIndex((e) => e.id === id), j = i + dir;
   if (i < 0 || j < 0 || j >= list.length) return;
@@ -599,6 +608,7 @@ function clearGridInputs() {
   const ex = document.querySelector(".log-card .extras"); if (ex) ex.open = false;
 }
 function logToday() {
+  if (DEMO) return demoToast();
   const date = $("log-date").value || todayStr();
   const items = gatherGridItems();
   if (!items.length) return toast("Fill in reps (or time) for at least one move.", true);
@@ -645,12 +655,14 @@ function rewardMsg(streak) {
 }
 
 async function updateExercise(id, fields) {
+  if (DEMO) return demoToast();
   const e = STATE.exercises.find((x) => x.id === id); if (!e) return;
   Object.assign(e, fields); rebuildDict(); saveCache(); renderGrid();
   try { const { error } = await SB.from("wo_exercises").update(fields).eq("id", id); if (error) throw error; }
   catch (err) { queue({ t: "updEx", id, fields }); }
 }
 async function deleteExercise(id) {
+  if (DEMO) return demoToast();
   STATE.exercises = STATE.exercises.filter((x) => x.id !== id); rebuildDict(); saveCache(); renderGrid();
   try { const { error } = await SB.from("wo_exercises").delete().eq("id", id); if (error) throw error; }
   catch (err) { queue({ t: "delEx", id }); }
@@ -678,6 +690,43 @@ function renderCalendar() {
     cell.onclick = () => openDay(ds);
     grid.appendChild(cell);
   }
+}
+
+function switchCalMode(m) {
+  calMode = m;
+  $("cal-month").classList.toggle("hidden", m !== "month");
+  $("cal-year").classList.toggle("hidden", m !== "year");
+  document.querySelectorAll("#cal-mode .seg-btn").forEach((b) => b.classList.toggle("active", b.dataset.cm === m));
+  if (m === "year") renderYear(); else renderCalendar();
+}
+function renderYear() {
+  const year = yearCursor;
+  $("yr-title").textContent = year;
+  const map = pointsEngine();
+  const start = new Date(year, 0, 1); start.setDate(start.getDate() - start.getDay());
+  const end = new Date(year, 11, 31); end.setDate(end.getDate() + (6 - end.getDay()));
+  const weeks = []; let cur = new Date(start);
+  while (cur <= end) { const wk = []; for (let i = 0; i < 7; i++) { wk.push(new Date(cur)); cur.setDate(cur.getDate() + 1); } weeks.push(wk); }
+  const N = weeks.length;
+  $("yr-months").style.gridTemplateColumns = `repeat(${N},13px)`;
+  $("yr-grid").style.gridTemplateColumns = `repeat(${N},13px)`;
+  let lastM = -1;
+  $("yr-months").innerHTML = weeks.map((wk) => {
+    let lab = "";
+    for (const d of wk) if (d.getFullYear() === year && d.getDate() <= 7 && d.getMonth() !== lastM) { lab = d.toLocaleDateString(undefined, { month: "short" }); lastM = d.getMonth(); break; }
+    return `<div class="yr-mlab">${lab}</div>`;
+  }).join("");
+  const t = todayStr();
+  $("yr-grid").innerHTML = weeks.map((wk) => wk.map((d) => {
+    if (d.getFullYear() !== year) return `<div class="yr-cell blank"></div>`;
+    const ds = ymd(d), pts = (map[ds] || {}).total || 0;
+    const lvl = pts === 0 ? 0 : pts < 25 ? 1 : pts < 45 ? 2 : pts < 70 ? 3 : 4;
+    return `<div class="yr-cell l${lvl}${ds === t ? " today" : ""}" data-day="${ds}" title="${ds} · ${pts} pts"></div>`;
+  }).join("")).join("");
+  $("yr-grid").querySelectorAll(".yr-cell[data-day]").forEach((c) => c.onclick = () => openDay(c.dataset.day));
+  let days = 0, ypts = 0;
+  for (const d in map) if (d.startsWith(year + "-")) { days++; ypts += map[d].total; }
+  $("yr-summary").innerHTML = `<b>${days}</b> days trained · <b>${ypts.toLocaleString()}</b> pts in ${year}`;
 }
 
 const CAT_COLORS = { chest: "#f5a623", back: "#3ddc84", legs: "#5b8cff", shoulders: "#c77dff", arms: "#ff7d7d", core: "#ffd166", cardio: "#36c5d6", other: "#9aa2b3" };
@@ -901,6 +950,8 @@ function bind() {
   $("set-quote").onclick = () => { PREFS.showQuote = !PREFS.showQuote; savePrefs(); applyPrefs(); };
   $("set-tapsets").onclick = () => { PREFS.setMode = PREFS.setMode === "tap" ? "number" : "tap"; savePrefs(); applyPrefs(); renderGrid(); };
   $("set-textreps").onclick = () => { PREFS.textReps = !PREFS.textReps; savePrefs(); applyPrefs(); renderGrid(); };
+  $("set-demo").onclick = () => toggleDemo(!DEMO);
+  $("demo-off").onclick = () => toggleDemo(false);
   $("set-version").textContent = APP_VERSION;
   $("set-update").onclick = checkForUpdate;
   $("update-btn").onclick = applyUpdate;
@@ -923,6 +974,9 @@ function bind() {
   $("cal-prev").onclick = () => { calCursor.setMonth(calCursor.getMonth() - 1); renderCalendar(); };
   $("cal-next").onclick = () => { calCursor.setMonth(calCursor.getMonth() + 1); renderCalendar(); };
   $("cal-today").onclick = () => { calCursor = new Date(); renderCalendar(); };
+  document.querySelectorAll("#cal-mode .seg-btn").forEach((b) => b.onclick = () => switchCalMode(b.dataset.cm));
+  $("yr-prev").onclick = () => { yearCursor--; renderYear(); };
+  $("yr-next").onclick = () => { yearCursor++; renderYear(); };
 
   $("day-add").onclick = () => { if ($("day-input").value.trim()) { closeSheet("day-sheet"); openPreview(openDayStr, $("day-input").value); } };
   $("preview-confirm").onclick = confirmPreview;
@@ -949,7 +1003,7 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v11";
+const APP_VERSION = "v12";
 let swReg = null, updating = false;
 function onUpdateReady() {
   $("update-bar")?.classList.remove("hidden");
@@ -981,6 +1035,38 @@ function initSW() {
     });
   }).catch(() => {});
   navigator.serviceWorker.addEventListener("controllerchange", () => { if (updating) location.reload(); });
+}
+
+/* ───────── demo data (in-memory only, never persisted) ───────── */
+function demoLog(e, ds, f) {
+  return { id: "demo-" + ds + "-" + e.abbr + "-" + Math.random().toString(36).slice(2, 6), user_id: "demo", date: ds, abbr: e.abbr, exercise: e.name, reps: f.reps || 0, sets: f.sets || 0, weight: f.weight || null, distance: f.distance || null, duration: f.duration || null, note: null, raw: "demo", created_at: ds + "T12:00" };
+}
+function genDemoData() {
+  const base = (STATE.exercises && STATE.exercises.length) ? STATE.exercises
+    : SEED.map(([abbr, name, category, kind]) => ({ id: "demo-" + abbr, user_id: "demo", abbr, name, category, kind }));
+  const strength = base.filter((e) => (e.kind || "strength") === "strength");
+  const cardio = base.filter((e) => e.kind === "cardio");
+  const activity = base.filter((e) => e.kind === "activity");
+  const logs = [], today = new Date();
+  for (let i = 0; i < 330; i++) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    if (Math.random() < (i < 60 ? 0.38 : 0.52)) continue; // rest days (denser recent)
+    const ds = ymd(d), roll = Math.random();
+    if (roll < 0.15 && cardio.length) { const e = cardio[Math.floor(Math.random() * cardio.length)]; logs.push(demoLog(e, ds, { distance: +(2 + Math.random() * 8).toFixed(1), duration: 20 + Math.floor(Math.random() * 40) })); }
+    else if (roll < 0.25 && activity.length) { const e = activity[Math.floor(Math.random() * activity.length)]; logs.push(demoLog(e, ds, { duration: 30 + Math.floor(Math.random() * 60) })); }
+    else { const pool = [...strength], n = Math.min(2 + Math.floor(Math.random() * 4), pool.length); for (let k = 0; k < n; k++) { const e = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; const heavy = e.category === "legs" || e.category === "back"; logs.push(demoLog(e, ds, { reps: 8 + Math.floor(Math.random() * 12), sets: 2 + Math.floor(Math.random() * 3), weight: (heavy ? 95 : 25) + Math.floor(Math.random() * 8) * 5 })); } }
+  }
+  return { exercises: base, logs };
+}
+function toggleDemo(on) {
+  if (on === DEMO) return;
+  DEMO = on;
+  if (DEMO) { REAL_STATE = STATE; STATE = genDemoData(); }
+  else { STATE = REAL_STATE || STATE; REAL_STATE = null; }
+  rebuildDict();
+  $("demo-bar").classList.toggle("hidden", !DEMO);
+  const sw = $("set-demo"); if (sw) { sw.classList.toggle("on", DEMO); sw.setAttribute("aria-checked", DEMO); }
+  renderAll();
 }
 
 initSW();
