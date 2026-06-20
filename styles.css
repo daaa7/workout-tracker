@@ -99,8 +99,10 @@ h1,h2,h3{margin:0}
 .cal-cell.has::before{content:"";position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--grn)}
 .cal-num{font-size:12px;color:var(--mut);font-weight:600;margin-bottom:2px}
 .cal-cell.today .cal-num{color:var(--amber2)}
-.cal-mini{font-size:8.5px;line-height:1.25;color:var(--mut);overflow:hidden;flex:1}
-.cal-mini b{color:var(--txt);font-weight:600}
+.cal-mini{font-size:8.5px;line-height:1.3;color:var(--mut);overflow:hidden;flex:1;display:flex;flex-direction:column;gap:2px}
+.cal-mini .cm-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-mini b{color:var(--txt);font-weight:700}
+.cal-mini .cm-more{color:var(--mut2);font-size:8px}
 .cal-legend{font-size:11px;color:var(--mut2);margin-top:12px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
 .dot-have{width:7px;height:7px;border-radius:50%;background:var(--grn);display:inline-block}
 

@@ -683,9 +683,11 @@ function renderCalendar() {
     const dayLogs = logsByDate(ds);
     const cell = document.createElement("div");
     cell.className = "cal-cell" + (dayLogs.length ? " has" : "") + (ds === todayStr() ? " today" : "");
-    const mini = dayLogs.slice(0, 3).map((l) => l.note
-      ? `<div>${escapeHtml(l.note.slice(0, 8))}</div>`
-      : `<div><b>${escapeHtml(l.abbr || "")}</b>${l.reps || (l.duration ? l.duration + "m" : "") || ""}</div>`).join("");
+    const mini = dayLogs.slice(0, 3).map((l) => {
+      if (l.note) return `<div class="cm-row">${escapeHtml(l.note.slice(0, 9))}</div>`;
+      const val = l.reps || (l.duration ? l.duration + "m" : "") || "";
+      return `<div class="cm-row"><b>${escapeHtml(l.abbr || "")}</b> ${val}</div>`;
+    }).join("") + (dayLogs.length > 3 ? `<div class="cm-more">+${dayLogs.length - 3}</div>` : "");
     cell.innerHTML = `<div class="cal-num">${d}</div><div class="cal-mini">${mini}</div>`;
     cell.onclick = () => openDay(ds);
     grid.appendChild(cell);
@@ -1003,7 +1005,7 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v12";
+const APP_VERSION = "v13";
 let swReg = null, updating = false;
 function onUpdateReady() {
   $("update-bar")?.classList.remove("hidden");
