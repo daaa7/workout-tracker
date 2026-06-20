@@ -473,7 +473,12 @@ function renderGrid() {
       ${rowInputs(kindOf(e))}
     </div>`).join("");
   grid.querySelectorAll(".ex-row").forEach((row) => {
-    row.querySelectorAll(".ex-num").forEach((n) => n.oninput = () => markFilled(row));
+    row.querySelectorAll(".ex-num").forEach((n) => n.oninput = () => {
+      n.value = n.inputMode === "decimal"
+        ? n.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1")  // weight/distance: digits + one dot
+        : n.value.replace(/[^0-9]/g, "");                              // reps/sets/min: whole numbers only
+      markFilled(row);
+    });
     const tap = row.querySelector(".set-tap");
     if (tap) {
       renderSetMarks(tap);
