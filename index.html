@@ -149,13 +149,48 @@
 
       <!-- ===== STATS ===== -->
       <div id="view-stats" class="view hidden">
-        <div class="card points-card">
-          <h2>Points</h2>
-          <div class="grid2">
-            <div class="kpi gold"><div class="kpi-num" id="k-life">0</div><div class="kpi-lbl">Lifetime (never resets)</div></div>
-            <div class="kpi gold"><div class="kpi-num" id="k-month">0</div><div class="kpi-lbl" id="k-monthlbl">This month</div></div>
-            <div class="kpi"><div class="kpi-num" id="k-rank">—</div><div class="kpi-lbl">Current rank</div></div>
-            <div class="kpi"><div class="kpi-num" id="k-bestmonth">0</div><div class="kpi-lbl">Best month</div></div>
+
+        <!-- MOMENTUM HERO -->
+        <div class="stat-hero">
+          <div class="sh-top">
+            <div class="sh-left">
+              <div class="sh-rank" id="sh-rank">Warming Up</div>
+              <div class="sh-month"><b id="sh-month">0</b> pts this month</div>
+            </div>
+            <div class="sh-streak"><span class="sh-flame">🔥</span><b id="sh-streak">0</b><span>day streak</span></div>
+          </div>
+          <div class="sh-bar"><div class="sh-bar-fill" id="sh-bar-fill"></div></div>
+          <div class="sh-next" id="sh-next">—</div>
+        </div>
+
+        <!-- MOMENTUM TREND -->
+        <div class="card">
+          <div class="h2row"><h2>Momentum · last 8 weeks</h2><span class="trend-delta" id="trend-delta"></span></div>
+          <div class="trend" id="trend"></div>
+        </div>
+
+        <!-- MUSCLE SPLIT -->
+        <div class="card">
+          <h2>By muscle group</h2>
+          <div id="cat-bars" class="cat-bars"></div>
+        </div>
+
+        <!-- TOP MOVES -->
+        <div class="card">
+          <h2>Top moves</h2>
+          <div id="top-ex" class="top-ex"></div>
+        </div>
+
+        <!-- TROPHY ROOM (secondary) -->
+        <div class="card trophy">
+          <h2>🏆 Trophy room</h2>
+          <div class="mini-kpis">
+            <div class="mk gold"><b id="k-life">0</b><span>lifetime pts</span></div>
+            <div class="mk gold"><b id="k-bestmonth">0</b><span>best month</span></div>
+            <div class="mk"><b id="k-best">0</b><span>best streak</span></div>
+            <div class="mk"><b id="k-workouts">0</b><span>workouts</span></div>
+            <div class="mk"><b id="k-reps">0</b><span>total reps</span></div>
+            <div class="mk"><b id="k-sets">0</b><span>total sets</span></div>
           </div>
           <details class="extras" style="margin-top:14px">
             <summary>How points work</summary>
@@ -169,34 +204,7 @@
           </details>
         </div>
 
-        <div class="card">
-          <h2>All-time</h2>
-          <div class="grid2">
-            <div class="kpi"><div class="kpi-num" id="k-workouts">0</div><div class="kpi-lbl">Workouts logged</div></div>
-            <div class="kpi"><div class="kpi-num" id="k-best">0</div><div class="kpi-lbl">Best streak (days)</div></div>
-            <div class="kpi"><div class="kpi-num" id="k-reps">0</div><div class="kpi-lbl">Total reps</div></div>
-            <div class="kpi"><div class="kpi-num" id="k-sets">0</div><div class="kpi-lbl">Total sets</div></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>This month</h2>
-          <div class="grid2">
-            <div class="kpi"><div class="kpi-num" id="k-mdays">0</div><div class="kpi-lbl">Days trained</div></div>
-            <div class="kpi"><div class="kpi-num" id="k-mreps">0</div><div class="kpi-lbl">Reps</div></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>By muscle group</h2>
-          <div id="cat-bars" class="cat-bars"></div>
-        </div>
-
-        <div class="card">
-          <h2>Top exercises</h2>
-          <div id="top-ex" class="top-ex"></div>
-        </div>
-
+        <!-- 12-WEEK HEATMAP -->
         <div class="card">
           <h2>Last 12 weeks</h2>
           <div id="heatmap" class="heatmap"></div>

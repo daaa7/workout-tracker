@@ -680,32 +680,70 @@ function renderCalendar() {
   }
 }
 
+const CAT_COLORS = { chest: "#f5a623", back: "#3ddc84", legs: "#5b8cff", shoulders: "#c77dff", arms: "#ff7d7d", core: "#ffd166", cardio: "#36c5d6", other: "#9aa2b3" };
+function rankProgress(m) {
+  let cur = RANKS[0], next = null;
+  for (let i = 0; i < RANKS.length; i++) if (m >= RANKS[i][0]) { cur = RANKS[i]; next = RANKS[i + 1] || null; }
+  if (!next) return { rank: cur[1], pct: 100, label: "Top rank — keep stacking 🔥" };
+  const span = next[0] - cur[0], into = m - cur[0];
+  return { rank: cur[1], pct: Math.max(4, Math.round(into / span * 100)), label: `${next[0] - m} pts to ${next[1]}` };
+}
+function weeklyPoints(n) {
+  const map = pointsEngine(), out = [];
+  const sow = new Date(); sow.setDate(sow.getDate() - sow.getDay()); sow.setHours(0, 0, 0, 0);
+  for (let i = n - 1; i >= 0; i--) {
+    const ws = new Date(sow); ws.setDate(sow.getDate() - i * 7);
+    const we = new Date(ws); we.setDate(ws.getDate() + 6);
+    let sum = 0;
+    for (const d in map) { const dd = parseYmd(d); if (dd >= ws && dd <= we) sum += map[d].total; }
+    out.push({ ws, sum });
+  }
+  return out;
+}
 function renderStats() {
   const s = computeStats();
   const p = pointsAgg();
+
+  // momentum hero
+  const rp = rankProgress(p.month);
+  $("sh-rank").textContent = rp.rank;
+  $("sh-month").textContent = p.month.toLocaleString();
+  $("sh-streak").textContent = s.streak;
+  $("sh-bar-fill").style.width = rp.pct + "%";
+  $("sh-next").textContent = rp.label;
+
+  // 8-week trend
+  const wk = weeklyPoints(8), maxw = Math.max(1, ...wk.map((w) => w.sum));
+  $("trend").innerHTML = wk.map((w, i) => {
+    const h = Math.round((w.sum / maxw) * 100);
+    const cls = "trend-col" + (i === wk.length - 1 ? " now" : "") + (w.sum === 0 ? " zero" : "");
+    const lbl = i === wk.length - 1 ? "now" : (wk.length - 1 - i) + "w";
+    return `<div class="${cls}"><div class="trend-v">${w.sum || ""}</div><div class="trend-bar" style="height:${Math.max(h, w.sum ? 6 : 2)}%"></div><div class="trend-l">${lbl}</div></div>`;
+  }).join("");
+  const tw = wk[wk.length - 1].sum, lw = wk[wk.length - 2]?.sum || 0;
+  const dEl = $("trend-delta"), diff = tw - lw;
+  dEl.textContent = diff > 0 ? `▲ ${diff} vs last wk` : diff < 0 ? `▼ ${-diff} vs last wk` : "even vs last wk";
+  dEl.className = "trend-delta " + (diff > 0 ? "up" : diff < 0 ? "down" : "flat");
+
+  // trophy room
   $("k-life").textContent = p.lifetime.toLocaleString();
-  $("k-month").textContent = p.month.toLocaleString();
-  $("k-monthlbl").textContent = monthName() + " (resets 1st)";
-  $("k-rank").textContent = rankFor(p.month);
   $("k-bestmonth").textContent = p.bestMonth.toLocaleString();
-  $("k-workouts").textContent = s.totalDays;
   $("k-best").textContent = s.bestStreak;
+  $("k-workouts").textContent = s.totalDays;
   $("k-reps").textContent = s.totalReps.toLocaleString();
   $("k-sets").textContent = s.totalSets.toLocaleString();
-  $("k-mdays").textContent = s.monthDays;
-  $("k-mreps").textContent = s.monthReps.toLocaleString();
 
-  // category bars
+  // colorized muscle bars
   const cats = s.byCat, max = Math.max(1, ...Object.values(cats));
   const cb = $("cat-bars");
   const catEntries = Object.entries(cats).sort((a, b) => b[1] - a[1]);
   cb.innerHTML = catEntries.length
     ? catEntries.map(([c, v]) => `<div class="cat-row"><div class="cat-name">${c}</div>
-        <div class="cat-track"><div class="cat-fill" style="width:${(v / max) * 100}%"></div></div>
+        <div class="cat-track"><div class="cat-fill" style="width:${(v / max) * 100}%;background:${CAT_COLORS[c] || "var(--amber)"}"></div></div>
         <div class="cat-val">${v.toLocaleString()}</div></div>`).join("")
     : `<div class="empty-note">No data yet.</div>`;
 
-  // top exercises
+  // top moves
   const te = Object.entries(s.byEx).sort((a, b) => b[1] - a[1]).slice(0, 6);
   $("top-ex").innerHTML = te.length
     ? te.map(([n, v]) => `<div class="top-row"><span class="tx-name">${escapeHtml(n)}</span><span class="tx-val">${v.toLocaleString()} reps</span></div>`).join("")
@@ -911,7 +949,7 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v10";
+const APP_VERSION = "v11";
 let swReg = null, updating = false;
 function onUpdateReady() {
   $("update-bar")?.classList.remove("hidden");
