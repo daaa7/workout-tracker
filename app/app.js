@@ -79,16 +79,18 @@ function parseLine(text) {
    STARTER DICTIONARY (seeded once, per account)
    ════════════════════════════════════════════════════════════════ */
 // [abbr, name, category, kind]  kind: strength | cardio | activity
+// Lean, welcoming starter set (panel-tuned): covers push / pull / squat / core /
+// cardio + recovery, ordered easiest-first so the first row feels doable. Everything
+// else is a 2-tap "+ Add" away. Only seeded for brand-new accounts.
 const SEED = [
-  ["BP", "Bench Press", "chest", "strength"], ["DB", "Dumbbell Press", "chest", "strength"],
-  ["BTFLY", "Chest Fly", "chest", "strength"], ["PU", "Push-ups", "chest", "strength"],
-  ["C", "Crunches", "core", "strength"], ["LRSUP", "Leg Raise Sit-ups", "core", "strength"], ["PLANK", "Plank", "core", "strength"],
-  ["SQT", "Squats", "legs", "strength"], ["LUNGE", "Lunges", "legs", "strength"], ["LEG", "Leg Press", "legs", "strength"],
-  ["DL", "Deadlift", "back", "strength"], ["ROW", "Row", "back", "strength"], ["PULL", "Pull-ups", "back", "strength"],
-  ["SH", "Shoulder Press", "shoulders", "strength"], ["SHRUG", "Shrugs", "shoulders", "strength"],
-  ["CURL", "Bicep Curl", "arms", "strength"], ["TRI", "Tricep Extension", "arms", "strength"],
-  ["RUN", "Run", "cardio", "cardio"], ["WALK", "Walk", "cardio", "cardio"], ["BIKE", "Cycling", "cardio", "cardio"],
-  ["YOGA", "Yoga", "other", "activity"], ["JJ", "Jiu Jitsu", "other", "activity"], ["STRETCH", "Stretching", "other", "activity"],
+  ["WALK", "Walk", "cardio", "cardio"],
+  ["PU", "Push-ups", "chest", "strength"],
+  ["SQT", "Squats", "legs", "strength"],
+  ["ROW", "Row", "back", "strength"],
+  ["PLANK", "Plank", "core", "strength"],
+  ["STRETCH", "Stretching", "other", "activity"],
+  ["RUN", "Run", "cardio", "cardio"],
+  ["BP", "Bench Press", "chest", "strength"],
 ];
 const CATS = ["chest", "back", "legs", "shoulders", "arms", "core", "cardio", "other"];
 const KINDS = [["strength", "Strength (reps×sets×lbs)"], ["cardio", "Cardio (distance + time)"], ["activity", "Activity (time only)"]];
@@ -185,8 +187,8 @@ function rebuildDict() {
   for (const e of STATE.exercises) DICT[e.abbr] = { name: e.name, category: e.category, kind: e.kind || "strength" };
 }
 async function seedDict() {
-  const rows = SEED.map(([abbr, name, category, kind]) => ({
-    id: crypto.randomUUID(), user_id: USER.id, abbr, name, category, kind,
+  const rows = SEED.map(([abbr, name, category, kind], i) => ({
+    id: crypto.randomUUID(), user_id: USER.id, abbr, name, category, kind, sort_order: i * 10,
   }));
   STATE.exercises = rows; rebuildDict(); saveCache();
   try { const { error } = await SB.from("wo_exercises").insert(rows); if (error) throw error; }
