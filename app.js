@@ -41,12 +41,12 @@ function parseSets(s) {
 function parseToken(tok) {
   const raw = tok.trim();
   if (!raw) return null;
-  // abbr x reps [x sets]      e.g. BPx20x4 · BP x 20 x ||||
-  let m = raw.match(/^([a-zA-Z][a-zA-Z\-]*)\s*[x×*]\s*(\d+)\s*(?:[x×*]\s*(\d+|[|lI]+))?$/);
-  if (m) return { kind: "set", abbr: m[1].toUpperCase(), reps: +m[2], sets: parseSets(m[3]), raw };
-  // reps abbr [x sets]        e.g. 100Cx|||| · 100C
-  m = raw.match(/^(\d+)\s*([a-zA-Z][a-zA-Z\-]*)\s*(?:[x×*]\s*(\d+|[|lI]+))?$/);
-  if (m) return { kind: "set", abbr: m[2].toUpperCase(), reps: +m[1], sets: parseSets(m[3]), raw };
+  // abbr x reps [x sets] [@weight]   e.g. BPx20x4 · BP x 20 x |||| · BPx10x3@135
+  let m = raw.match(/^([a-zA-Z][a-zA-Z\-]*)\s*[x×*]\s*(\d+)\s*(?:[x×*]\s*(\d+|[|lI]+))?\s*(?:@\s*(\d+(?:\.\d+)?))?$/);
+  if (m) return { kind: "set", abbr: m[1].toUpperCase(), reps: +m[2], sets: parseSets(m[3]), weight: m[4] ? +m[4] : null, raw };
+  // reps abbr [x sets] [@weight]     e.g. 100Cx|||| · 100C
+  m = raw.match(/^(\d+)\s*([a-zA-Z][a-zA-Z\-]*)\s*(?:[x×*]\s*(\d+|[|lI]+))?\s*(?:@\s*(\d+(?:\.\d+)?))?$/);
+  if (m) return { kind: "set", abbr: m[2].toUpperCase(), reps: +m[1], sets: parseSets(m[3]), weight: m[4] ? +m[4] : null, raw };
   // otherwise: a note (REST, 10 min run, OFF, etc.)
   return { kind: "note", note: raw, raw };
 }
@@ -57,17 +57,20 @@ function parseLine(text) {
 /* ════════════════════════════════════════════════════════════════
    STARTER DICTIONARY (seeded once, per account)
    ════════════════════════════════════════════════════════════════ */
+// [abbr, name, category, kind]  kind: strength | cardio | activity
 const SEED = [
-  ["BP", "Bench Press", "chest"], ["DB", "Dumbbell Press", "chest"],
-  ["BTFLY", "Chest Fly", "chest"], ["PU", "Push-ups", "chest"],
-  ["C", "Crunches", "core"], ["CR", "Crunches", "core"], ["PLANK", "Plank", "core"],
-  ["SQT", "Squats", "legs"], ["LUNGE", "Lunges", "legs"], ["LEG", "Leg Press", "legs"],
-  ["DL", "Deadlift", "back"], ["ROW", "Row", "back"], ["PULL", "Pull-ups", "back"],
-  ["SH", "Shoulder Press", "shoulders"], ["SHRUG", "Shrugs", "shoulders"],
-  ["CURL", "Bicep Curl", "arms"], ["TRI", "Tricep Extension", "arms"],
-  ["RUN", "Run", "cardio"], ["WALK", "Walk", "cardio"], ["BIKE", "Cycling", "cardio"],
+  ["BP", "Bench Press", "chest", "strength"], ["DB", "Dumbbell Press", "chest", "strength"],
+  ["BTFLY", "Chest Fly", "chest", "strength"], ["PU", "Push-ups", "chest", "strength"],
+  ["C", "Crunches", "core", "strength"], ["LRSUP", "Leg Raise Sit-ups", "core", "strength"], ["PLANK", "Plank", "core", "strength"],
+  ["SQT", "Squats", "legs", "strength"], ["LUNGE", "Lunges", "legs", "strength"], ["LEG", "Leg Press", "legs", "strength"],
+  ["DL", "Deadlift", "back", "strength"], ["ROW", "Row", "back", "strength"], ["PULL", "Pull-ups", "back", "strength"],
+  ["SH", "Shoulder Press", "shoulders", "strength"], ["SHRUG", "Shrugs", "shoulders", "strength"],
+  ["CURL", "Bicep Curl", "arms", "strength"], ["TRI", "Tricep Extension", "arms", "strength"],
+  ["RUN", "Run", "cardio", "cardio"], ["WALK", "Walk", "cardio", "cardio"], ["BIKE", "Cycling", "cardio", "cardio"],
+  ["YOGA", "Yoga", "other", "activity"], ["JJ", "Jiu Jitsu", "other", "activity"], ["STRETCH", "Stretching", "other", "activity"],
 ];
 const CATS = ["chest", "back", "legs", "shoulders", "arms", "core", "cardio", "other"];
+const KINDS = [["strength", "Strength (reps×sets×lbs)"], ["cardio", "Cardio (distance + time)"], ["activity", "Activity (time only)"]];
 
 /* ════════════════════════════════════════════════════════════════
    LOCAL CACHE + OFFLINE QUEUE
@@ -92,7 +95,7 @@ async function flushPending() {
   const still = [];
   for (const op of p) {
     try {
-      if (op.t === "insLog") { const { error } = await SB.from("wo_logs").insert(op.row); if (error) throw error; }
+      if (op.t === "insLog") { await insertLogRows([op.row]); }
       else if (op.t === "delLog") { const { error } = await SB.from("wo_logs").delete().eq("id", op.id); if (error) throw error; }
       else if (op.t === "insEx") { const { error } = await SB.from("wo_exercises").insert(op.row); if (error) throw error; }
       else if (op.t === "updEx") { const { error } = await SB.from("wo_exercises").update(op.fields).eq("id", op.id); if (error) throw error; }
@@ -158,11 +161,11 @@ async function loadData() {
 }
 function rebuildDict() {
   DICT = {};
-  for (const e of STATE.exercises) DICT[e.abbr] = { name: e.name, category: e.category };
+  for (const e of STATE.exercises) DICT[e.abbr] = { name: e.name, category: e.category, kind: e.kind || "strength" };
 }
 async function seedDict() {
-  const rows = SEED.map(([abbr, name, category]) => ({
-    id: crypto.randomUUID(), user_id: USER.id, abbr, name, category,
+  const rows = SEED.map(([abbr, name, category, kind]) => ({
+    id: crypto.randomUUID(), user_id: USER.id, abbr, name, category, kind,
   }));
   STATE.exercises = rows; rebuildDict(); saveCache();
   try { const { error } = await SB.from("wo_exercises").insert(rows); if (error) throw error; }
@@ -177,18 +180,30 @@ async function commitLogs(date, items) {
     id: crypto.randomUUID(), user_id: USER.id, date,
     abbr: it.kind === "set" ? it.abbr : null,
     exercise: it.kind === "set" ? (DICT[it.abbr]?.name || it.abbr) : null,
-    reps: it.kind === "set" ? it.reps : 0,
-    sets: it.kind === "set" ? it.sets : 0,
+    reps: it.kind === "set" ? (it.reps || 0) : 0,
+    sets: it.kind === "set" ? (it.sets || 0) : 0,
+    weight: it.weight ?? null,
+    distance: it.distance ?? null,
+    duration: it.duration ?? null,
     note: it.kind === "note" ? it.note : null,
     raw: it.raw,
   }));
   STATE.logs = [...rows, ...STATE.logs];
   saveCache(); renderAll();
-  try { const { error } = await SB.from("wo_logs").insert(rows); if (error) throw error; }
+  try { await insertLogRows(rows); }
   catch (e) { rows.forEach((row) => queue({ t: "insLog", row })); }
 }
-async function upsertExercise(abbr, name, category) {
-  const row = { id: crypto.randomUUID(), user_id: USER.id, abbr, name, category };
+// Insert that tolerates a DB where weight/distance/duration columns don't exist yet
+async function insertLogRows(rows) {
+  let { error } = await SB.from("wo_logs").insert(rows);
+  if (error && /weight|distance|duration|schema cache|does not exist/i.test(error.message || "")) {
+    const stripped = rows.map(({ weight, distance, duration, ...r }) => r);
+    ({ error } = await SB.from("wo_logs").insert(stripped));
+  }
+  if (error) throw error;
+}
+async function upsertExercise(abbr, name, category, kind = "strength") {
+  const row = { id: crypto.randomUUID(), user_id: USER.id, abbr, name, category, kind };
   STATE.exercises.push(row); rebuildDict(); saveCache();
   try { const { error } = await SB.from("wo_exercises").insert(row); if (error) throw error; }
   catch (e) { queue({ t: "insEx", row }); }
@@ -221,9 +236,14 @@ function openPreviewItems(date, items) {
     if (it.kind === "note") {
       box.innerHTML = `<div class="pv-note"><span>note:</span> ${escapeHtml(it.note)}</div>`;
     } else if (DICT[it.abbr]) {
-      const vol = it.reps * it.sets;
+      let detail;
+      if (!it.reps && (it.duration || it.distance)) {
+        detail = [it.distance ? `${it.distance} mi` : "", it.duration ? `${it.duration} min` : ""].filter(Boolean).join(" · ");
+      } else {
+        detail = `${it.reps} × ${it.sets} = ${it.reps * it.sets} reps${it.weight ? ` @ ${it.weight} lbs` : ""}`;
+      }
       box.innerHTML = `<div class="pv-known"><span class="pv-name">${escapeHtml(DICT[it.abbr].name)}</span>
-        <span class="pv-calc">${it.reps} × ${it.sets} = ${vol} reps</span></div>`;
+        <span class="pv-calc">${detail}</span></div>`;
     } else {
       box.className = "pv-item pv-new";
       box.innerHTML = `
@@ -270,7 +290,16 @@ function logsByDate(date) { return STATE.logs.filter((l) => l.date === date); }
 function moveLabel(l) {
   if (l.note) return l.note;
   const nm = l.exercise || l.abbr;
-  return l.sets > 1 ? `${nm} ${l.reps}×${l.sets}` : `${nm} ${l.reps}`;
+  // cardio / activity (no reps, has time and/or distance)
+  if (!l.reps && (l.duration || l.distance)) {
+    const bits = [];
+    if (l.distance) bits.push(`${l.distance} mi`);
+    if (l.duration) bits.push(`${l.duration} min`);
+    return `${nm} ${bits.join(" · ")}`;
+  }
+  let s = l.sets > 1 ? `${nm} ${l.reps}×${l.sets}` : `${nm} ${l.reps}`;
+  if (l.weight) s += ` @${l.weight}`;
+  return s;
 }
 
 function renderAll() { renderLog(); renderCalendar(); renderStats(); }
@@ -323,11 +352,15 @@ function pointsEngine() {
     if (base) parts.push([hasSet ? "Showed up" : "Logged activity", base]);
     const exB = Math.min(exCount * 3, 15); if (exB) parts.push([`${exCount} exercise${exCount > 1 ? "s" : ""}`, exB]);
     const volB = Math.min(Math.floor(vol / 50), 10); if (volB) parts.push([`${vol} reps volume`, volB]);
+    const dayDur = dayLogs.reduce((s, l) => s + (l.duration || 0), 0);
+    const dayDist = dayLogs.reduce((s, l) => s + (l.distance || 0), 0);
+    const cardioB = Math.min(Math.floor(dayDur / 10) + Math.floor(dayDist * 2), 10);
+    if (cardioB) parts.push([[dayDist ? `${dayDist} mi` : "", dayDur ? `${dayDur} min` : ""].filter(Boolean).join(" · ") || "cardio", cardioB]);
     const newCount = new Set(dayLogs.filter((l) => l.abbr && firstSeen[l.abbr] === date).map((l) => l.abbr)).size;
     const newB = newCount * 5; if (newB) parts.push([`${newCount} new move${newCount > 1 ? "s" : ""}`, newB]);
     let comeback = 0;
     if (prevDay) { const gap = (parseYmd(date) - parseYmd(prevDay)) / 86400000; if (gap >= 3) { comeback = 15; parts.push(["Comeback", 15]); } }
-    const subtotal = base + exB + volB + newB + comeback;
+    const subtotal = base + exB + volB + cardioB + newB + comeback;
     let streak = 0, dd = parseYmd(date); while (dateSet.has(ymd(dd))) { streak++; dd.setDate(dd.getDate() - 1); }
     let mult = 1; if (streak >= 30) mult = 2; else if (streak >= 14) mult = 1.75; else if (streak >= 7) mult = 1.5; else if (streak >= 3) mult = 1.2;
     let total = Math.round(subtotal * mult);
@@ -363,30 +396,44 @@ function renderHero(st) {
    ════════════════════════════════════════════════════════════════ */
 let manageMode = false;
 function exUsage() { const u = {}; for (const l of STATE.logs) if (l.abbr) u[l.abbr] = (u[l.abbr] || 0) + 1; return u; }
+function kindOf(e) { return e.kind || "strength"; }
+function rowInputs(kind) {
+  if (kind === "cardio") return `
+      <input class="ex-num ex-dist" inputmode="decimal" placeholder="mi" />
+      <input class="ex-num ex-dur" inputmode="numeric" placeholder="min" />`;
+  if (kind === "activity") return `
+      <input class="ex-num ex-dur ex-wide" inputmode="numeric" placeholder="min" />`;
+  return `
+      <input class="ex-num ex-reps" inputmode="numeric" pattern="[0-9]*" placeholder="reps" />
+      <span class="ex-x">×</span>
+      <input class="ex-num ex-sets" inputmode="numeric" pattern="[0-9]*" placeholder="sets" />
+      <input class="ex-num ex-wt" inputmode="decimal" placeholder="lbs" />`;
+}
 function renderGrid() {
   const grid = $("ex-grid");
   const u = exUsage();
-  const list = [...STATE.exercises].sort((a, b) => (u[b.abbr] || 0) - (u[a.abbr] || 0) || a.name.localeCompare(b.name));
+  const list = [...STATE.exercises].sort((a, b) => (u[b.abbr] || 0) - (u[a.abbr] || 0) || (a.name || "").localeCompare(b.name || ""));
   if (!list.length) { grid.innerHTML = `<div class="day-empty">No moves yet — tap “Manage moves” to add yours.</div>`; return; }
+  const kindOpts = (sel) => KINDS.map(([v, l]) => `<option value="${v}"${v === sel ? " selected" : ""}>${l.split(" ")[0]}</option>`).join("");
   grid.innerHTML = list.map((e) => `
-    <div class="ex-row${manageMode ? " managing" : ""}" data-id="${e.id}" data-abbr="${escapeHtml(e.abbr)}">
+    <div class="ex-row${manageMode ? " managing" : ""}" data-id="${e.id}" data-abbr="${escapeHtml(e.abbr)}" data-kind="${kindOf(e)}">
       <div class="ex-name">${escapeHtml(e.name)}<span class="ex-ab">${escapeHtml(e.abbr)}</span></div>
       <div class="ex-edit">
         <input class="ee-abbr" value="${escapeHtml(e.abbr)}" maxlength="8" />
         <input class="ee-name" value="${escapeHtml(e.name)}" />
+        <select class="ee-kind">${kindOpts(kindOf(e))}</select>
         <button class="ex-del" title="Delete">🗑</button>
       </div>
-      <input class="ex-num ex-reps" inputmode="numeric" pattern="[0-9]*" placeholder="reps" />
-      <span class="ex-x">×</span>
-      <input class="ex-num ex-sets" inputmode="numeric" pattern="[0-9]*" placeholder="sets" />
+      ${rowInputs(kindOf(e))}
     </div>`).join("");
   grid.querySelectorAll(".ex-row").forEach((row) => {
-    const reps = row.querySelector(".ex-reps");
-    reps.oninput = () => row.classList.toggle("filled", !!reps.value);
+    const nums = [...row.querySelectorAll(".ex-num")];
+    nums.forEach((n) => n.oninput = () => row.classList.toggle("filled", nums.some((x) => x.value)));
     if (manageMode) {
       const id = row.dataset.id;
       row.querySelector(".ee-name").onchange = (ev) => updateExercise(id, { name: ev.target.value.trim() });
       row.querySelector(".ee-abbr").onchange = (ev) => updateExercise(id, { abbr: ev.target.value.trim().toUpperCase() });
+      row.querySelector(".ee-kind").onchange = (ev) => updateExercise(id, { kind: ev.target.value });
       row.querySelector(".ex-del").onclick = () => { if (confirm("Delete this move? Your past logs stay.")) deleteExercise(id); };
     }
   });
@@ -398,10 +445,10 @@ function toggleManage() {
   renderGrid();
 }
 async function addExerciseManage() {
-  const abbr = $("ax-abbr").value.trim().toUpperCase(), name = $("ax-name").value.trim(), cat = $("ax-cat").value;
+  const abbr = $("ax-abbr").value.trim().toUpperCase(), name = $("ax-name").value.trim(), cat = $("ax-cat").value, kind = $("ax-kind").value;
   if (!abbr || !name) return toast("Enter an abbreviation and a name.", true);
   if (DICT[abbr]) return toast(`${abbr} already exists.`, true);
-  await upsertExercise(abbr, name, cat);
+  await upsertExercise(abbr, name, cat, kind);
   $("ax-abbr").value = ""; $("ax-name").value = "";
   renderGrid(); toast(`Added ${abbr} · ${name}`);
 }
@@ -412,11 +459,23 @@ async function addExerciseManage() {
 function gatherGridItems() {
   const items = [];
   $("ex-grid").querySelectorAll(".ex-row").forEach((row) => {
-    const reps = parseInt(row.querySelector(".ex-reps").value, 10);
-    if (!reps || reps < 1) return;
-    let sets = parseInt(row.querySelector(".ex-sets").value, 10); if (!sets || sets < 1) sets = 1;
-    const abbr = row.dataset.abbr;
-    items.push({ kind: "set", abbr, reps, sets, raw: `${abbr}x${reps}x${sets}` });
+    const abbr = row.dataset.abbr, kind = row.dataset.kind;
+    const val = (sel) => { const el = row.querySelector(sel); const n = el ? parseFloat(el.value) : NaN; return isNaN(n) ? 0 : n; };
+    if (kind === "cardio") {
+      const dist = val(".ex-dist"), dur = Math.round(val(".ex-dur"));
+      if (dist <= 0 && dur <= 0) return;
+      items.push({ kind: "set", abbr, reps: 0, sets: 0, distance: dist > 0 ? dist : null, duration: dur > 0 ? dur : null, raw: `${abbr} ${dist > 0 ? dist + "mi " : ""}${dur > 0 ? dur + "min" : ""}`.trim() });
+    } else if (kind === "activity") {
+      const dur = Math.round(val(".ex-dur"));
+      if (dur <= 0) return;
+      items.push({ kind: "set", abbr, reps: 0, sets: 0, duration: dur, raw: `${abbr} ${dur}min` });
+    } else {
+      const reps = Math.round(val(".ex-reps"));
+      if (reps < 1) return;
+      let sets = Math.round(val(".ex-sets")); if (sets < 1) sets = 1;
+      const wt = val(".ex-wt");
+      items.push({ kind: "set", abbr, reps, sets, weight: wt > 0 ? wt : null, raw: `${abbr}x${reps}x${sets}${wt > 0 ? "@" + wt : ""}` });
+    }
   });
   return items;
 }
@@ -494,7 +553,7 @@ function renderCalendar() {
     cell.className = "cal-cell" + (dayLogs.length ? " has" : "") + (ds === todayStr() ? " today" : "");
     const mini = dayLogs.slice(0, 3).map((l) => l.note
       ? `<div>${escapeHtml(l.note.slice(0, 8))}</div>`
-      : `<div><b>${escapeHtml(l.abbr || "")}</b>${l.reps || ""}</div>`).join("");
+      : `<div><b>${escapeHtml(l.abbr || "")}</b>${l.reps || (l.duration ? l.duration + "m" : "") || ""}</div>`).join("");
     cell.innerHTML = `<div class="cal-num">${d}</div><div class="cal-mini">${mini}</div>`;
     cell.onclick = () => openDay(ds);
     grid.appendChild(cell);
@@ -684,6 +743,7 @@ function bind() {
   $("btn-log").onclick = logToday;
   $("btn-manage").onclick = toggleManage;
   $("ax-cat").innerHTML = CATS.map((c) => `<option value="${c}">${c}</option>`).join("");
+  $("ax-kind").innerHTML = KINDS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
   $("ax-add").onclick = addExerciseManage;
   $("reward").onclick = hideReward;
 

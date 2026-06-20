@@ -235,3 +235,13 @@ h1,h2,h3{margin:0}
 .reward-parts{margin-top:16px;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
 .reward-parts b{color:var(--txt)}
 .reward-msg{margin-top:14px;font-size:15px;color:var(--txt);font-weight:600;max-width:280px;margin-left:auto;margin-right:auto}
+
+/* ───── multi-type grid inputs ───── */
+.ex-num{width:48px}
+.ex-num.ex-wide{width:64px}
+.ex-row .ex-x{margin:0 -2px}
+.add-ex{flex-wrap:wrap}
+.add-ex .ax-kind{width:118px}
+.ex-edit{flex-wrap:wrap}
+.ex-edit .ee-kind{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 6px;font-size:12px;flex:none}
+@media (max-width:360px){ .ex-num{width:42px} }

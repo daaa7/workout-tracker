@@ -11,6 +11,7 @@ create table if not exists public.wo_exercises (
   abbr        text not null,
   name        text not null,
   category    text default 'other',
+  kind        text default 'strength',   -- strength | cardio | activity
   created_at  timestamptz not null default now(),
   unique (user_id, abbr)
 );
@@ -24,6 +25,9 @@ create table if not exists public.wo_logs (
   exercise    text,
   reps        int  default 0,
   sets        int  default 1,
+  weight      numeric,    -- lbs (strength)
+  distance    numeric,    -- miles (cardio)
+  duration    int,        -- minutes (cardio / activity)
   note        text,
   raw         text,
   created_at  timestamptz not null default now()
