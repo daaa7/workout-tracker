@@ -351,19 +351,19 @@ body.light .set-tap.has{background:#fff6e4}
 body.light{
   --bg:#eef1f5; --bg2:#ffffff; --card:#ffffff; --card2:#eef1f6;
   --line:#dfe3ea; --txt:#1b1f27; --mut:#5b6376; --mut2:#9aa2b3;
-  --amber2:#9a5b00; /* deep amber for TEXT in light mode (bright amber fails contrast on white) */
+  --amber2:#c2410c; /* burnt orange for TEXT accents in light mode — reads energetic, not brown, passes contrast on white */
 }
-/* light-mode contrast fixes: amber only as fills behind dark text, deep amber for text */
+/* light-mode: warm cards + burnt-orange accents (no brown, no leaked dark gradients) */
 body.light .stat-hero{background:linear-gradient(135deg,#fff3df,#ffffff);border-color:#f0e3c4}
 body.light .sh-streak{background:rgba(0,0,0,.05)}
-body.light .sh-streak b{color:#c25e00}
-body.light .sh-bar,body.light .sh-bar-fill{}
-body.light .reward-pts{-webkit-text-fill-color:#b46a00;background:none;color:#b46a00}
-body.light .brand-mark{color:#c77400}
-body.light .quote-mark{color:#c77400}
+body.light .sh-streak b{color:#c2410c}
+body.light .reward-pts{-webkit-text-fill-color:#c2410c;background:none;color:#c2410c}
+body.light .brand-mark,body.light .quote-mark{color:#c2410c}
 body.light .quote-card{background:linear-gradient(135deg,#fff7e8,#ffffff);border-color:#f0e3c4}
 body.light .ex-row.filled{background:#fff6e4;border-color:var(--amber)}
-body.light .kpi.gold{background:linear-gradient(135deg,#fff5e0,#ffffff);border-color:#f0e3c4}
+body.light .kpi.gold,body.light .mk.gold{background:linear-gradient(135deg,#fff3df,#ffffff);border-color:#f0e3c4}
+body.light .mk.gold b{color:#c2410c}
+body.light .trend-bar{background:linear-gradient(180deg,#ffb347,var(--amber))}
 body.light .topbar{background:rgba(238,241,245,.85)}
 body.light .bottom-nav{background:rgba(255,255,255,.95)}
 body.light .reward-wrap{background:rgba(240,242,246,.7)}
