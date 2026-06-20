@@ -1100,7 +1100,7 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v19";
+const APP_VERSION = "v25";
 let swReg = null, updating = false;
 function onUpdateReady() {
   $("update-bar")?.classList.remove("hidden");
@@ -1123,7 +1123,11 @@ function initSW() {
   if (!("serviceWorker" in navigator)) return;
   navigator.serviceWorker.register("sw.js").then((reg) => {
     swReg = reg;
-    if (reg.waiting && navigator.serviceWorker.controller) onUpdateReady();
+    // A pending update from a previous session: apply it SILENTLY at startup —
+    // safe because nothing's been logged yet. (Mid-session updates still show the
+    // banner below so we never swap files while you're logging.) This stops the
+    // "Update available" banner from reappearing on every login.
+    if (reg.waiting && navigator.serviceWorker.controller) applyUpdate();
     reg.addEventListener("updatefound", () => {
       const nw = reg.installing;
       if (nw) nw.addEventListener("statechange", () => {
