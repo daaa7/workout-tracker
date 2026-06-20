@@ -44,6 +44,10 @@
 
   <!-- ───────────── APP ───────────── -->
   <section id="app" class="app hidden">
+    <div id="update-bar" class="update-bar hidden">
+      <span>New version ready</span>
+      <button id="update-btn">Update now</button>
+    </div>
     <header class="topbar">
       <div class="brand-sm"><span class="brand-mark">◆</span> GROOVE</div>
       <div class="topbar-right">
@@ -283,7 +287,14 @@
         <button id="set-textreps" class="switch" role="switch" aria-checked="false"><span></span></button>
       </div>
 
-      <div class="set-foot">GROOVE · <span id="set-version">v9</span></div>
+      <div class="set-row">
+        <div class="set-label">Version <span id="set-version">—</span>
+          <div class="set-sub" id="set-update-sub">You're on the latest</div>
+        </div>
+        <button id="set-update" class="seg-btn upd-btn">Check for updates</button>
+      </div>
+
+      <div class="set-foot">GROOVE</div>
     </div>
   </div>
 

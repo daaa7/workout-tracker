@@ -425,6 +425,31 @@ function renderHero(st) {
    ════════════════════════════════════════════════════════════════ */
 let manageMode = false;
 function exUsage() { const u = {}; for (const l of STATE.logs) if (l.abbr) u[l.abbr] = (u[l.abbr] || 0) + 1; return u; }
+
+/* in-progress entry buffer — survives re-renders (reorder/manage) AND app restarts */
+function draftKey() { return `wo_draft_${USER?.id}`; }
+function readDraft() { try { return JSON.parse(localStorage.getItem(draftKey())) || {}; } catch (e) { return {}; } }
+function writeDraft(d) { try { localStorage.setItem(draftKey(), JSON.stringify(d)); } catch (e) {} }
+function clearDraft() { try { localStorage.removeItem(draftKey()); } catch (e) {} }
+function saveRowDraft(row) {
+  const d = readDraft(), g = (s) => row.querySelector(s)?.value || "";
+  const tap = row.querySelector(".set-tap");
+  const e = { reps: g(".ex-reps"), sets: g(".ex-sets"), wt: g(".ex-wt"), dist: g(".ex-dist"), hr: g(".ex-hr"), min: g(".ex-min"), tap: tap ? +tap.dataset.count : 0 };
+  if (!e.reps && !e.sets && !e.wt && !e.dist && !e.hr && !e.min && !e.tap) delete d[row.dataset.abbr];
+  else d[row.dataset.abbr] = e;
+  writeDraft(d);
+}
+function restoreDraftToGrid() {
+  const d = readDraft();
+  document.querySelectorAll("#ex-grid .ex-row").forEach((row) => {
+    const v = d[row.dataset.abbr]; if (!v) return;
+    const set = (s, val) => { const el = row.querySelector(s); if (el && val) el.value = val; };
+    set(".ex-reps", v.reps); set(".ex-sets", v.sets); set(".ex-wt", v.wt);
+    set(".ex-dist", v.dist); set(".ex-hr", v.hr); set(".ex-min", v.min);
+    const tap = row.querySelector(".set-tap"); if (tap && v.tap) { tap.dataset.count = v.tap; renderSetMarks(tap); }
+    markFilled(row);
+  });
+}
 function kindOf(e) { return e.kind || "strength"; }
 function numBox(cls, label, mode) {
   // type=text + inputmode + pattern is the canonical recipe that forces the
@@ -499,13 +524,13 @@ function renderGrid() {
           ? n.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1")  // weight/distance: digits + one dot
           : n.value.replace(/[^0-9]/g, "");                              // sets/min: whole numbers only
       }
-      markFilled(row);
+      markFilled(row); saveRowDraft(row);
     });
     const tap = row.querySelector(".set-tap");
     if (tap) {
       renderSetMarks(tap);
-      tap.onclick = () => { tap.dataset.count = +tap.dataset.count + 1; renderSetMarks(tap); markFilled(row); };
-      tap.querySelector(".set-clear").onclick = (e) => { e.stopPropagation(); tap.dataset.count = 0; renderSetMarks(tap); markFilled(row); };
+      tap.onclick = () => { tap.dataset.count = +tap.dataset.count + 1; renderSetMarks(tap); markFilled(row); saveRowDraft(row); };
+      tap.querySelector(".set-clear").onclick = (e) => { e.stopPropagation(); tap.dataset.count = 0; renderSetMarks(tap); markFilled(row); saveRowDraft(row); };
     }
     if (manageMode) {
       const id = row.dataset.id;
@@ -517,6 +542,7 @@ function renderGrid() {
       row.querySelector(".ex-del").onclick = () => { if (confirm("Delete this move? Your past logs stay.")) deleteExercise(id); };
     }
   });
+  restoreDraftToGrid(); // keep in-progress entries across re-renders
 }
 function toggleManage() {
   manageMode = !manageMode;
@@ -569,6 +595,7 @@ function clearGridInputs() {
   $("ex-grid").querySelectorAll(".ex-num").forEach((i) => (i.value = ""));
   $("ex-grid").querySelectorAll(".set-tap").forEach((b) => { b.dataset.count = 0; renderSetMarks(b); });
   $("ex-grid").querySelectorAll(".ex-row").forEach((r) => r.classList.remove("filled"));
+  clearDraft();
   const ex = document.querySelector(".log-card .extras"); if (ex) ex.open = false;
 }
 function logToday() {
@@ -836,6 +863,9 @@ function bind() {
   $("set-quote").onclick = () => { PREFS.showQuote = !PREFS.showQuote; savePrefs(); applyPrefs(); };
   $("set-tapsets").onclick = () => { PREFS.setMode = PREFS.setMode === "tap" ? "number" : "tap"; savePrefs(); applyPrefs(); renderGrid(); };
   $("set-textreps").onclick = () => { PREFS.textReps = !PREFS.textReps; savePrefs(); applyPrefs(); renderGrid(); };
+  $("set-version").textContent = APP_VERSION;
+  $("set-update").onclick = checkForUpdate;
+  $("update-btn").onclick = applyUpdate;
 
   $("log-date").value = todayStr();
   $("log-date").onchange = () => { const d = $("log-date").value || todayStr(); $("log-day-label").textContent = d === todayStr() ? "Today's workout" : prettyDate(d) + "'s workout"; };
@@ -880,5 +910,40 @@ async function boot() {
 function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.add("hidden"); }
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+/* ───────── version + self-update ───────── */
+const APP_VERSION = "v10";
+let swReg = null, updating = false;
+function onUpdateReady() {
+  $("update-bar")?.classList.remove("hidden");
+  const sub = $("set-update-sub"), btn = $("set-update");
+  if (sub) sub.textContent = "Update available";
+  if (btn) { btn.textContent = "Update now"; btn.classList.add("ready"); }
+}
+function applyUpdate() {
+  updating = true;
+  if (swReg && swReg.waiting) swReg.waiting.postMessage({ type: "SKIP_WAITING" }); // → controllerchange → reload
+  else location.reload();
+}
+async function checkForUpdate() {
+  if (!swReg) return location.reload();
+  toast("Checking…");
+  try { await swReg.update(); } catch (e) {}
+  setTimeout(() => { swReg.waiting ? onUpdateReady() : toast(`You're on the latest (${APP_VERSION}) ✓`); }, 900);
+}
+function initSW() {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register("sw.js").then((reg) => {
+    swReg = reg;
+    if (reg.waiting && navigator.serviceWorker.controller) onUpdateReady();
+    reg.addEventListener("updatefound", () => {
+      const nw = reg.installing;
+      if (nw) nw.addEventListener("statechange", () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller) onUpdateReady();
+      });
+    });
+  }).catch(() => {});
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (updating) location.reload(); });
+}
+
+initSW();
 boot();

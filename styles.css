@@ -278,6 +278,12 @@ body.light .set-tap.has{background:#fff6e4}
 .switch.on span{left:23px}
 .set-foot{text-align:center;color:var(--mut2);font-size:12px;margin-top:20px}
 
+/* update banner + button */
+.update-bar{display:flex;align-items:center;justify-content:center;gap:12px;background:linear-gradient(135deg,var(--amber),var(--amber2));color:#1a1206;font-size:13px;font-weight:700;padding:9px 14px;padding-top:max(9px,env(safe-area-inset-top))}
+.update-bar button{background:#1a1206;color:var(--amber2);border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.upd-btn{border:1px solid var(--line);border-radius:10px;color:var(--txt)}
+.upd-btn.ready{background:var(--amber);color:#1a1206;border-color:var(--amber)}
+
 /* ───── LIGHT THEME ───── */
 body.light{
   --bg:#eef1f5; --bg2:#ffffff; --card:#ffffff; --card2:#eef1f6;
