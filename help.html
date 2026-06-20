@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GROOVE — HQ · Changelog · Roadmap</title>
+<style>
+  :root{--bg:#0f1115;--bg2:#161922;--card:#1b1f2a;--line:#2a3040;--txt:#e7eaf0;--mut:#8b93a7;--mut2:#5b6276;--amber:#f5a623;--amber2:#ffc457;--grn:#3ddc84;--blue:#5b8cff;}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:24px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .mk{color:var(--amber);font-size:22px;filter:drop-shadow(0 0 10px rgba(245,166,35,.5))}
+  h1{font-size:26px;letter-spacing:3px;font-weight:800;margin:0}
+  .sub{color:var(--mut);font-size:14px;margin-top:6px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .pill{font-size:12px;background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:4px 11px;color:var(--mut)}
+  .pill b{color:var(--amber2)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--amber2);margin:36px 0 14px;border-bottom:1px solid var(--line);padding-bottom:8px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+  p{margin:0 0 10px} a{color:var(--amber2)}
+  code{background:#0c0e13;color:var(--amber2);padding:1px 6px;border-radius:5px;font-size:.88em}
+  ul{margin:6px 0 10px;padding-left:20px} li{margin:4px 0}
+  .status{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:6px;margin-left:8px;vertical-align:middle}
+  .s-done{background:rgba(61,220,132,.15);color:var(--grn)}
+  .s-now{background:rgba(245,166,35,.18);color:var(--amber2)}
+  .s-next{background:rgba(91,140,255,.15);color:var(--blue)}
+  .s-later{background:var(--bg2);color:var(--mut)}
+  .phase{border-left:3px solid var(--line);padding-left:16px;margin-bottom:20px}
+  .phase.now{border-color:var(--amber)} .phase.done{border-color:var(--grn)}
+  .phase h3{margin:0 0 4px;font-size:17px}
+  .phase .gate{font-size:12px;color:var(--mut);font-style:italic;margin-top:6px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .v{color:var(--amber2);font-weight:700;white-space:nowrap}
+  .foot{color:var(--mut2);font-size:12px;text-align:center;margin-top:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand"><span class="mk">◆</span><h1>GROOVE</h1></div>
+  <div class="sub">Workout tracker · internal HQ — data model, changelog &amp; roadmap. Working name; not final.</div>
+  <div class="meta">
+    <span class="pill">Live: <b>daaa7.github.io/workout-tracker</b></span>
+    <span class="pill">Version <b>v11</b></span>
+    <span class="pill">Stack <b>PWA + Supabase</b></span>
+    <span class="pill">Phase <b>0 · Dogfood</b></span>
+    <span class="pill">Updated <b>2026-06-19</b></span>
+  </div>
+</header>
+
+<h2>What it is</h2>
+<div class="card">
+  <p>A phone-first workout tracker built so Joe gets back in the groove of training — log fast the way he marked up paper calendars. It's a <b>PWA</b> (installable web app) on free GitHub Pages, syncing across phone + computer via <b>Supabase</b>.</p>
+  <p><b>Operating principle (from the panel):</b> personal-first, product-optional. The only KPI in Phase 0 is <b>workouts logged per week</b>. Features earn each escalation with real retention data, and the whole thing sits <i>behind</i> the KatchT go-live gate — KatchT is the bet, GROOVE is founder dogfood.</p>
+</div>
+
+<h2>How it works</h2>
+<div class="card">
+  <ul>
+    <li><b>Grid logging:</b> your exercises are rows with reps/sets/lbs boxes (or distance + hr/min for cardio, hr/min for classes). Fill what you did → <b>Log it</b>.</li>
+    <li><b>Sets:</b> tap once per set — tally <code>|</code> <code>||</code> <code>|||</code> then <code>4×</code>, <code>5×</code>… (toggle to type a number in Settings).</li>
+    <li><b>Exercise types:</b> Strength (reps×sets×lbs) · Cardio (distance + hr/min) · Activity (hr/min — Jiu Jitsu, Yoga).</li>
+    <li><b>Add a move:</b> name + abbreviation + type → joins your grid with the right boxes.</li>
+    <li><b>Manage moves:</b> rename, retype, delete, and <b>reorder</b> (▲▼) by priority.</li>
+    <li><b>Text reps</b> (optional): AMRAP / 8-12 / failure; plain numbers still save as numbers.</li>
+    <li><b>Drafts:</b> in-progress entries survive reordering and app restarts (never lose typed numbers).</li>
+    <li><b>Settings:</b> light/dark theme · show/hide daily quote · tap-vs-type sets · text reps · version + self-update.</li>
+  </ul>
+</div>
+
+<h2>Points engine</h2>
+<div class="card">
+  <p>Mirrors the Command Center's philosophy: a <b>lifetime</b> total that never resets (trophy room) + a <b>monthly</b> layer that resets the 1st (fresh-start dopamine) + a <b>streak</b>. Auto-derived from real logs — never minted.</p>
+  <ul>
+    <li>Showed up <b>+20</b> · per exercise <b>+3</b> (cap 15) · volume <b>+1</b>/50 reps (cap 10) · cardio/time bonus (cap 10)</li>
+    <li>New move <b>+5</b> · 3× in a week <b>+30</b> · comeback after a break <b>+15</b></li>
+    <li>Daily streak multiplier: 3d <b>×1.2</b> · 7d <b>×1.5</b> · 14d <b>×1.75</b> · 30d <b>×2</b></li>
+    <li>Ranks (monthly): Warming Up → Finding the Groove → In the Groove → Locked In → Relentless</li>
+  </ul>
+</div>
+
+<h2>Data model (Supabase)</h2>
+<div class="card">
+  <p>Dedicated free project <code>workout-tracker</code> (ref <code>ebxyickzytkywkxlcrlf</code>) in a separate "personal" org so it stays free even after KatchT's org goes Pro. Row-Level Security isolates all data by user.</p>
+  <table>
+    <tr><th>Table</th><th>Columns</th></tr>
+    <tr><td class="v">wo_exercises</td><td>id, user_id, abbr, name, category, <b>kind</b> (strength/cardio/activity), <b>sort_order</b>, created_at</td></tr>
+    <tr><td class="v">wo_logs</td><td>id, user_id, date, abbr, exercise, reps, sets, <b>weight</b>, <b>distance</b>, <b>duration</b> (min), note, raw, created_at</td></tr>
+  </table>
+  <p style="margin-top:10px;color:var(--mut);font-size:13px">Auth: email + password, signups closed after Joe's account (invite-only). Drafts cached in localStorage. Schema in <code>schema.sql</code>.</p>
+</div>
+
+<h2>Changelog</h2>
+<div class="card">
+  <table>
+    <tr><th>Ver</th><th>Shipped</th></tr>
+    <tr><td class="v">v1</td><td>Core app: shorthand logging, calendar grid, stats, streaks, context-aware quotes, PWA + Supabase sync, offline queue</td></tr>
+    <tr><td class="v">v2</td><td>Log redesign — exercise grid as primary logger; editable dictionary; points engine; reward animation; monthly goal ring + rank</td></tr>
+    <tr><td class="v">v3–v6</td><td>Exercise types (strength/cardio/activity); Settings (theme + quote toggle); tighter quote; reorder moves; "Add a new move" form; tap-to-count sets + persistent box labels</td></tr>
+    <tr><td class="v">v7–v9</td><td>Cardio/activity hr+min; optional text reps; phone number-pad inputs; sets display tally→4×/5×</td></tr>
+    <tr><td class="v">v10</td><td>Self-update banner + Settings version/check; in-progress draft survives re-renders &amp; restarts</td></tr>
+    <tr><td class="v">v11</td><td>Stats redesign — momentum hero (rank progress bar), 8-week trend + week-vs-week delta, colorized muscle split, trophy room</td></tr>
+  </table>
+</div>
+
+<h2>Roadmap</h2>
+
+<div class="phase now">
+  <h3>Phase 0 — Dogfood <span class="status s-now">Now</span></h3>
+  <p>Use it daily for 4–6 weeks. Fix only what annoys mid-workout. No store, no marketing, no big features.</p>
+  <div class="gate">Gate → advance only if: Joe trains ≥3×/wk for 4 wks AND still loves using it. KPI: workouts/week.</div>
+</div>
+
+<div class="phase">
+  <h3>Phase 1 — Quiet share <span class="status s-next">Next</span></h3>
+  <ul>
+    <li>Decide the <b>name</b> (Groove is crowded; revisit when public) <span class="status s-later">open</span></li>
+    <li><b>Facing website</b> + privacy policy page <span class="status s-later">planned</span></li>
+    <li>Real <b>PNG icons</b> (192/512/maskable) <span class="status s-later">planned</span></li>
+    <li>Ship free (no ads) to <b>Google Play</b> via PWABuilder ($25) <span class="status s-later">planned</span></li>
+    <li>Hand to 5–10 friends</li>
+  </ul>
+  <div class="gate">Gate → advance only if 3–4 friends still logging at 3 weeks.</div>
+</div>
+
+<div class="phase">
+  <h3>Phase 2 — Templates &amp; wedge <span class="status s-later">Later</span></h3>
+  <ul>
+    <li><b>Templates</b> — weekly schedule (Mon=Push, Tue=Jiu Jitsu, …) that auto-populates each day's moves; classes saved with their time box. <i>Marquee Pro feature.</i></li>
+    <li><b>Personal records</b> (best set per lift) + auto-prefill last working weight</li>
+    <li><b>Rest timer</b>; <b>year heatmap</b> (Month/Year toggle in Calendar)</li>
+  </ul>
+  <div class="gate">Gate → retained users ask to pay / invite others.</div>
+</div>
+
+<div class="phase">
+  <h3>Phase 3 — Programs, AI &amp; monetization <span class="status s-later">Later</span></h3>
+  <ul>
+    <li><b>Programs</b> — predefined goal-based plans (Weight Loss / Cardio / Muscle Growth) that progress over weeks + a current-status tracker</li>
+    <li><b>AI insights</b> / analytics over training history (needs weeks of data first)</li>
+    <li>Apple App Store; <b>Pro unlock</b> via Supabase entitlement (KatchT comp/plan pattern) — <b>no ads</b></li>
+  </ul>
+  <div class="gate">Gate → decide: real product, or beloved niche tool. Only then weigh seriously vs KatchT.</div>
+</div>
+
+<h2>Decisions log</h2>
+<div class="card">
+  <ul>
+    <li><b>Personal-first, product-optional</b>, gated by evidence, behind the KatchT go-live gate. (Panel verdict, Jun 19)</li>
+    <li><b>Dedicated free Supabase project</b> in a separate personal org → stays free after KatchT goes Pro.</li>
+    <li><b>Monetize via Pro unlock, not ads</b> — ads earn pennies, need a heavier wrapper, and hurt the daily-user experience.</li>
+    <li><b>Logging model:</b> reps/sets grid primary; tap-tally for sets; shorthand kept only for editing past days.</li>
+    <li><b>Name "Groove" is provisional</b> — revisit at Phase 1 (public).</li>
+  </ul>
+</div>
+
+<div class="foot">GROOVE HQ · generated 2026-06-19 · this doc is the single reference for data, changes &amp; plan.</div>
+
+</div>
+</body>
+</html>
