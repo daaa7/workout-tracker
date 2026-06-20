@@ -444,7 +444,7 @@ function rowInputs(kind) {
 }
 function renderSetMarks(btn) {
   const n = +btn.dataset.count;
-  btn.querySelector(".set-marks").textContent = n === 0 ? "" : (n <= 6 ? "|".repeat(n) : n + "×");
+  btn.querySelector(".set-marks").textContent = n === 0 ? "" : (n <= 3 ? "|".repeat(n) : n + "×");
   btn.classList.toggle("has", n > 0);
 }
 function markFilled(row) {
