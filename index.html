@@ -48,6 +48,7 @@
       <div class="brand-sm"><span class="brand-mark">◆</span> GROOVE</div>
       <div class="topbar-right">
         <span id="sync-dot" class="sync-dot" title="Synced"></span>
+        <button id="btn-settings" class="iconbtn" title="Settings">⚙</button>
         <button id="btn-signout" class="iconbtn" title="Sign out">⎋</button>
       </div>
     </header>
@@ -235,6 +236,35 @@
       <p class="preview-date" id="preview-date"></p>
       <div id="preview-list" class="preview-list"></div>
       <button id="preview-confirm" class="btn btn-primary">Log it ✓</button>
+    </div>
+  </div>
+
+  <!-- ───────────── SETTINGS ───────────── -->
+  <div id="settings" class="sheet-wrap hidden">
+    <div class="sheet-backdrop" data-close="settings"></div>
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h2>Settings</h2>
+        <button class="iconbtn" data-close="settings">✕</button>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Theme</div>
+        <div class="seg" id="set-theme">
+          <button data-theme="dark" class="seg-btn active">Dark</button>
+          <button data-theme="light" class="seg-btn">Light</button>
+        </div>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Daily quote
+          <div class="set-sub">Show the motivational quote on the Log screen</div>
+        </div>
+        <button id="set-quote" class="switch on" role="switch" aria-checked="true"><span></span></button>
+      </div>
+
+      <div class="set-foot">GROOVE · <span id="set-version">v4</span></div>
     </div>
   </div>
 

@@ -56,11 +56,11 @@ h1,h2,h3{margin:0}
 .card h2{font-size:15px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
 
 /* ───── QUOTE ───── */
-.quote-card{position:relative;background:linear-gradient(135deg,#241a0c,#1b1f2a);border:1px solid #3a2e16;border-radius:var(--rad);padding:24px 22px 20px;margin-bottom:14px;overflow:hidden}
+.quote-card{position:relative;background:linear-gradient(135deg,#241a0c,#1b1f2a);border:1px solid #3a2e16;border-radius:var(--rad);padding:13px 18px 12px;margin-bottom:14px;overflow:hidden}
 .quote-card::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,rgba(245,166,35,.16),transparent 60%);pointer-events:none}
-.quote-mark{font-size:54px;line-height:0;color:var(--amber);opacity:.5;font-family:Georgia,serif;height:24px}
-.quote-text{font-size:18px;font-weight:600;line-height:1.45;margin:6px 0 10px}
-.quote-author{font-size:13px;color:var(--amber2);font-weight:600;letter-spacing:.5px}
+.quote-mark{display:none}
+.quote-text{font-size:15px;font-weight:600;line-height:1.4;margin:0 0 5px}
+.quote-author{font-size:12px;color:var(--amber2);font-weight:600;letter-spacing:.5px}
 
 /* ───── STAT STRIP ───── */
 .stat-strip{display:flex;gap:10px;margin-bottom:14px}
@@ -245,3 +245,35 @@ h1,h2,h3{margin:0}
 .ex-edit{flex-wrap:wrap}
 .ex-edit .ee-kind{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 6px;font-size:12px;flex:none}
 @media (max-width:360px){ .ex-num{width:42px} }
+
+/* reorder (manage mode) */
+.ex-move{display:none;flex-direction:column;gap:2px;flex:none}
+.ex-row.managing .ex-move{display:flex}
+.ex-mv{background:var(--bg2);border:1px solid var(--line);color:var(--mut);width:26px;height:18px;border-radius:5px;font-size:10px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ex-mv:active{background:var(--card2);color:var(--amber2)}
+
+/* ───── SETTINGS ───── */
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.set-label{font-size:15px;color:var(--txt);font-weight:600}
+.set-sub{font-size:12px;color:var(--mut);font-weight:400;margin-top:3px}
+.seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg-btn{background:none;border:none;color:var(--mut);padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer}
+.seg-btn.active{background:var(--amber);color:#1a1206}
+.switch{width:50px;height:30px;border-radius:20px;border:none;background:var(--mut2);position:relative;cursor:pointer;flex:none;transition:background .2s}
+.switch.on{background:var(--amber)}
+.switch span{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s}
+.switch.on span{left:23px}
+.set-foot{text-align:center;color:var(--mut2);font-size:12px;margin-top:20px}
+
+/* ───── LIGHT THEME ───── */
+body.light{
+  --bg:#eef1f5; --bg2:#ffffff; --card:#ffffff; --card2:#eef1f6;
+  --line:#dfe3ea; --txt:#1b1f27; --mut:#5b6376; --mut2:#9aa2b3;
+}
+body.light .quote-card{background:linear-gradient(135deg,#fff7e8,#ffffff);border-color:#f0e3c4}
+body.light .ex-row.filled{background:#fff6e4;border-color:var(--amber)}
+body.light .kpi.gold{background:linear-gradient(135deg,#fff5e0,#ffffff);border-color:#f0e3c4}
+body.light .topbar{background:rgba(238,241,245,.85)}
+body.light .bottom-nav{background:rgba(255,255,255,.95)}
+body.light .reward-wrap{background:rgba(240,242,246,.7)}
+body.light .switch span{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}

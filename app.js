@@ -15,6 +15,18 @@ let STATE = { logs: [], exercises: [] }; // logs: rows, exercises: dict rows
 let DICT = {}; // abbr -> {name, category}
 let calCursor = null; // Date for the visible calendar month
 
+/* ───────── preferences (device-level) ───────── */
+const PREFS_KEY = "groove_prefs";
+let PREFS = { theme: "dark", showQuote: true };
+function loadPrefs() { try { PREFS = { ...PREFS, ...(JSON.parse(localStorage.getItem(PREFS_KEY)) || {}) }; } catch (e) {} }
+function savePrefs() { localStorage.setItem(PREFS_KEY, JSON.stringify(PREFS)); }
+function applyPrefs() {
+  document.body.classList.toggle("light", PREFS.theme === "light");
+  const qc = $("quote-card"); if (qc) qc.classList.toggle("hidden", !PREFS.showQuote);
+  document.querySelectorAll("#set-theme .seg-btn").forEach((b) => b.classList.toggle("active", b.dataset.theme === PREFS.theme));
+  const sw = $("set-quote"); if (sw) { sw.classList.toggle("on", PREFS.showQuote); sw.setAttribute("aria-checked", PREFS.showQuote); }
+}
+
 /* ───────── date helpers (local, no UTC drift) ───────── */
 const pad = (n) => String(n).padStart(2, "0");
 const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -409,14 +421,37 @@ function rowInputs(kind) {
       <input class="ex-num ex-sets" inputmode="numeric" pattern="[0-9]*" placeholder="sets" />
       <input class="ex-num ex-wt" inputmode="decimal" placeholder="lbs" />`;
 }
+function sortedExercises() {
+  const u = exUsage();
+  const hasOrder = STATE.exercises.some((e) => e.sort_order != null);
+  return [...STATE.exercises].sort((a, b) => {
+    if (hasOrder) { const ao = a.sort_order ?? 1e9, bo = b.sort_order ?? 1e9; if (ao !== bo) return ao - bo; }
+    else { const d = (u[b.abbr] || 0) - (u[a.abbr] || 0); if (d) return d; }
+    return (a.name || "").localeCompare(b.name || "");
+  });
+}
+function moveExercise(id, dir) {
+  const list = sortedExercises();
+  const i = list.findIndex((e) => e.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  list.forEach((e, idx) => (e.sort_order = idx));   // normalize to current order
+  const t = list[i].sort_order; list[i].sort_order = list[j].sort_order; list[j].sort_order = t;
+  saveCache(); renderGrid();
+  persistOrder(list);
+}
+async function persistOrder(list) {
+  const rows = list.map((e) => ({ id: e.id, user_id: USER.id, abbr: e.abbr, name: e.name, category: e.category, kind: e.kind || "strength", sort_order: e.sort_order }));
+  try { const { error } = await SB.from("wo_exercises").upsert(rows); if (error) throw error; }
+  catch (e) { /* sort_order column may not exist yet — order persists locally via cache */ }
+}
 function renderGrid() {
   const grid = $("ex-grid");
-  const u = exUsage();
-  const list = [...STATE.exercises].sort((a, b) => (u[b.abbr] || 0) - (u[a.abbr] || 0) || (a.name || "").localeCompare(b.name || ""));
+  const list = sortedExercises();
   if (!list.length) { grid.innerHTML = `<div class="day-empty">No moves yet — tap “Manage moves” to add yours.</div>`; return; }
   const kindOpts = (sel) => KINDS.map(([v, l]) => `<option value="${v}"${v === sel ? " selected" : ""}>${l.split(" ")[0]}</option>`).join("");
   grid.innerHTML = list.map((e) => `
     <div class="ex-row${manageMode ? " managing" : ""}" data-id="${e.id}" data-abbr="${escapeHtml(e.abbr)}" data-kind="${kindOf(e)}">
+      <div class="ex-move"><button class="ex-mv ex-up">▲</button><button class="ex-mv ex-dn">▼</button></div>
       <div class="ex-name">${escapeHtml(e.name)}<span class="ex-ab">${escapeHtml(e.abbr)}</span></div>
       <div class="ex-edit">
         <input class="ee-abbr" value="${escapeHtml(e.abbr)}" maxlength="8" />
@@ -434,6 +469,8 @@ function renderGrid() {
       row.querySelector(".ee-name").onchange = (ev) => updateExercise(id, { name: ev.target.value.trim() });
       row.querySelector(".ee-abbr").onchange = (ev) => updateExercise(id, { abbr: ev.target.value.trim().toUpperCase() });
       row.querySelector(".ee-kind").onchange = (ev) => updateExercise(id, { kind: ev.target.value });
+      row.querySelector(".ex-up").onclick = () => moveExercise(id, -1);
+      row.querySelector(".ex-dn").onclick = () => moveExercise(id, 1);
       row.querySelector(".ex-del").onclick = () => { if (confirm("Delete this move? Your past logs stay.")) deleteExercise(id); };
     }
   });
@@ -738,6 +775,10 @@ function bind() {
   $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") signIn(); });
   $("btn-signout").onclick = signOut;
 
+  $("btn-settings").onclick = () => openSheet("settings");
+  document.querySelectorAll("#set-theme .seg-btn").forEach((b) => b.onclick = () => { PREFS.theme = b.dataset.theme; savePrefs(); applyPrefs(); });
+  $("set-quote").onclick = () => { PREFS.showQuote = !PREFS.showQuote; savePrefs(); applyPrefs(); };
+
   $("log-date").value = todayStr();
   $("log-date").onchange = () => { const d = $("log-date").value || todayStr(); $("log-day-label").textContent = d === todayStr() ? "Today's workout" : prettyDate(d) + "'s workout"; };
   $("btn-log").onclick = logToday;
@@ -764,6 +805,7 @@ function bind() {
 /* ───────── boot ───────── */
 async function boot() {
   bind();
+  loadPrefs(); applyPrefs();
   const { data: { session } } = await SB.auth.getSession();
   SB.auth.onAuthStateChange((_e, sess) => {
     const wasUser = USER;
