@@ -1026,7 +1026,7 @@ function bind() {
   $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") signIn(); });
   $("btn-signout").onclick = signOut;
 
-  $("btn-settings").onclick = () => openSheet("settings");
+  $("btn-settings").onclick = () => { const a = $("set-account"); if (a) a.textContent = USER?.email || "—"; openSheet("settings"); };
   document.querySelectorAll("#set-theme .seg-btn").forEach((b) => b.onclick = () => { PREFS.theme = b.dataset.theme; savePrefs(); applyPrefs(); });
   $("set-quote").onclick = () => { PREFS.showQuote = !PREFS.showQuote; savePrefs(); applyPrefs(); };
   $("set-tapsets").onclick = () => { PREFS.setMode = PREFS.setMode === "tap" ? "number" : "tap"; savePrefs(); applyPrefs(); renderGrid(); };
