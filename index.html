@@ -108,10 +108,15 @@
           </div>
 
           <details class="extras">
-            <summary>Extras / new moves — type shorthand</summary>
-            <textarea id="log-input" class="log-input" rows="2"
-              placeholder="DLx30x3, 10 min run, REST"></textarea>
-            <div class="log-help">Format <code>abbr×reps×sets</code> — sets as a number (<code>x4</code>) or tally (<code>x||||</code>), comma-separated. Words like <code>REST</code> log as notes. New abbreviation? It'll ask you to name it.</div>
+            <summary>+ Add a new move</summary>
+            <div class="add-ex" style="display:flex">
+              <input id="nm-abbr" class="ax-in ax-abbr" placeholder="ABBR" maxlength="8" />
+              <input id="nm-name" class="ax-in ax-name" placeholder="Full name (e.g. Pull-ups)" />
+              <select id="nm-cat" class="ax-in ax-cat"></select>
+              <select id="nm-kind" class="ax-in ax-kind"></select>
+              <button id="nm-add" class="btn btn-primary btn-sm" style="margin:0">Add</button>
+            </div>
+            <div class="log-help">It joins your list above with reps / sets / lbs boxes (or a time box, for an activity) — fill them in and tap <b>Log it</b>.</div>
           </details>
 
           <button id="btn-log" class="btn btn-primary">Log it →</button>
@@ -264,7 +269,7 @@
         <button id="set-quote" class="switch on" role="switch" aria-checked="true"><span></span></button>
       </div>
 
-      <div class="set-foot">GROOVE · <span id="set-version">v4</span></div>
+      <div class="set-foot">GROOVE · <span id="set-version">v5</span></div>
     </div>
   </div>
 

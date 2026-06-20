@@ -519,16 +519,22 @@ function gatherGridItems() {
 function clearGridInputs() {
   $("ex-grid").querySelectorAll(".ex-num").forEach((i) => (i.value = ""));
   $("ex-grid").querySelectorAll(".ex-row").forEach((r) => r.classList.remove("filled"));
-  $("log-input").value = "";
   const ex = document.querySelector(".log-card .extras"); if (ex) ex.open = false;
 }
 function logToday() {
   const date = $("log-date").value || todayStr();
-  let items = gatherGridItems();
-  const extra = $("log-input").value.trim();
-  if (extra) items = items.concat(parseLine(extra));
-  if (!items.length) return toast("Fill in reps for at least one move (or use the extras box).", true);
+  const items = gatherGridItems();
+  if (!items.length) return toast("Fill in reps (or time) for at least one move.", true);
   commitFlow(date, items);
+}
+async function addNewMove() {
+  const abbr = $("nm-abbr").value.trim().toUpperCase(), name = $("nm-name").value.trim(), cat = $("nm-cat").value, kind = $("nm-kind").value;
+  if (!abbr || !name) return toast("Enter a name and an abbreviation.", true);
+  if (DICT[abbr]) return toast(`${abbr} is already in your list above.`, true);
+  await upsertExercise(abbr, name, cat, kind);
+  $("nm-abbr").value = ""; $("nm-name").value = "";
+  renderGrid();
+  toast(`Added ${name} — fill in its boxes above ▲`);
 }
 async function commitFlow(date, items) {
   const unknown = items.some((it) => it.kind === "set" && !DICT[it.abbr]);
@@ -786,6 +792,9 @@ function bind() {
   $("ax-cat").innerHTML = CATS.map((c) => `<option value="${c}">${c}</option>`).join("");
   $("ax-kind").innerHTML = KINDS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
   $("ax-add").onclick = addExerciseManage;
+  $("nm-cat").innerHTML = CATS.map((c) => `<option value="${c}">${c}</option>`).join("");
+  $("nm-kind").innerHTML = KINDS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+  $("nm-add").onclick = addNewMove;
   $("reward").onclick = hideReward;
 
   document.querySelectorAll(".nav-btn").forEach((b) => b.onclick = () => switchView(b.dataset.view));
