@@ -97,7 +97,11 @@
         <div class="card rest-card">
           <div class="rest-top">
             <span class="rest-title">⏱ Rest timer</span>
-            <label class="rest-auto">auto<button id="set-autorest" class="switch sm" role="switch" aria-checked="false"><span></span></button></label>
+            <div class="rest-ctrls">
+              <button id="rest-sound" class="rt-ic" title="Beep on/off">🔔</button>
+              <button id="rest-vibe" class="rt-ic" title="Vibrate on/off">📳</button>
+              <label class="rest-auto">auto<button id="set-autorest" class="switch sm" role="switch" aria-checked="false"><span></span></button></label>
+            </div>
           </div>
           <div id="rest-idle" class="rest-presets">
             <button class="rest-p" data-sec="60">1:00</button>

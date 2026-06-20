@@ -21,7 +21,7 @@ function demoToast() { toast("Demo mode is on — turn it off in Settings to mak
 
 /* ───────── preferences (device-level) ───────── */
 const PREFS_KEY = "groove_prefs";
-let PREFS = { theme: "dark", showQuote: true, setMode: "tap", textReps: false, autoRest: false };
+let PREFS = { theme: "dark", showQuote: true, setMode: "tap", textReps: false, autoRest: false, restSound: true, restVibrate: true };
 function loadPrefs() { try { PREFS = { ...PREFS, ...(JSON.parse(localStorage.getItem(PREFS_KEY)) || {}) }; } catch (e) {} }
 function savePrefs() { localStorage.setItem(PREFS_KEY, JSON.stringify(PREFS)); }
 function applyPrefs() {
@@ -32,6 +32,8 @@ function applyPrefs() {
   const ts = $("set-tapsets"); if (ts) { const on = PREFS.setMode === "tap"; ts.classList.toggle("on", on); ts.setAttribute("aria-checked", on); }
   const tr = $("set-textreps"); if (tr) { tr.classList.toggle("on", PREFS.textReps); tr.setAttribute("aria-checked", PREFS.textReps); }
   const ar = $("set-autorest"); if (ar) { ar.classList.toggle("on", PREFS.autoRest); ar.setAttribute("aria-checked", PREFS.autoRest); }
+  const rsd = $("rest-sound"); if (rsd) rsd.classList.toggle("off", !PREFS.restSound);
+  const rvb = $("rest-vibe"); if (rvb) rvb.classList.toggle("off", !PREFS.restVibrate);
 }
 
 /* ───────── date helpers (local, no UTC drift) ───────── */
@@ -789,8 +791,9 @@ function tickRest() {
 function stopRest() { clearInterval(restInt); $("rest-active").classList.add("hidden"); $("rest-idle").classList.remove("hidden"); }
 function restDone() {
   stopRest();
-  try { if (navigator.vibrate) navigator.vibrate([220, 90, 220]); } catch (e) {}
-  restBeep(); toast("Rest done — go 💪");
+  if (PREFS.restVibrate) { try { if (navigator.vibrate) navigator.vibrate([220, 90, 220]); } catch (e) {} }
+  if (PREFS.restSound) restBeep();
+  toast("Rest done — go 💪");
 }
 function restBeep() {
   try {
@@ -1033,6 +1036,8 @@ function bind() {
   document.querySelectorAll(".rest-p").forEach((b) => b.onclick = () => startRest(+b.dataset.sec));
   $("rest-stop").onclick = stopRest;
   $("set-autorest").onclick = () => { PREFS.autoRest = !PREFS.autoRest; savePrefs(); applyPrefs(); };
+  $("rest-sound").onclick = () => { PREFS.restSound = !PREFS.restSound; savePrefs(); applyPrefs(); toast(PREFS.restSound ? "Beep on" : "Beep off"); };
+  $("rest-vibe").onclick = () => { PREFS.restVibrate = !PREFS.restVibrate; savePrefs(); applyPrefs(); toast(PREFS.restVibrate ? "Buzz on" : "Buzz off"); };
   $("set-version").textContent = APP_VERSION;
   $("set-update").onclick = checkForUpdate;
   $("update-btn").onclick = applyUpdate;
@@ -1084,7 +1089,7 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v18";
+const APP_VERSION = "v19";
 let swReg = null, updating = false;
 function onUpdateReady() {
   $("update-bar")?.classList.remove("hidden");
