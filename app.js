@@ -17,7 +17,7 @@ let calCursor = null; // Date for the visible calendar month
 
 /* ───────── preferences (device-level) ───────── */
 const PREFS_KEY = "groove_prefs";
-let PREFS = { theme: "dark", showQuote: true };
+let PREFS = { theme: "dark", showQuote: true, setMode: "tap" };
 function loadPrefs() { try { PREFS = { ...PREFS, ...(JSON.parse(localStorage.getItem(PREFS_KEY)) || {}) }; } catch (e) {} }
 function savePrefs() { localStorage.setItem(PREFS_KEY, JSON.stringify(PREFS)); }
 function applyPrefs() {
@@ -25,6 +25,7 @@ function applyPrefs() {
   const qc = $("quote-card"); if (qc) qc.classList.toggle("hidden", !PREFS.showQuote);
   document.querySelectorAll("#set-theme .seg-btn").forEach((b) => b.classList.toggle("active", b.dataset.theme === PREFS.theme));
   const sw = $("set-quote"); if (sw) { sw.classList.toggle("on", PREFS.showQuote); sw.setAttribute("aria-checked", PREFS.showQuote); }
+  const ts = $("set-tapsets"); if (ts) { const on = PREFS.setMode === "tap"; ts.classList.toggle("on", on); ts.setAttribute("aria-checked", on); }
 }
 
 /* ───────── date helpers (local, no UTC drift) ───────── */
@@ -409,17 +410,27 @@ function renderHero(st) {
 let manageMode = false;
 function exUsage() { const u = {}; for (const l of STATE.logs) if (l.abbr) u[l.abbr] = (u[l.abbr] || 0) + 1; return u; }
 function kindOf(e) { return e.kind || "strength"; }
+function numBox(cls, label, mode) {
+  return `<label class="numbox"><span class="nb-l">${label}</span><input class="ex-num ${cls}" inputmode="${mode}" placeholder="" /></label>`;
+}
+function setControl() {
+  if (PREFS.setMode === "tap")
+    return `<div class="numbox"><span class="nb-l">sets</span><button type="button" class="set-tap" data-count="0"><span class="set-marks"></span><span class="set-clear">✕</span></button></div>`;
+  return numBox("ex-sets", "sets", "numeric");
+}
 function rowInputs(kind) {
-  if (kind === "cardio") return `
-      <input class="ex-num ex-dist" inputmode="decimal" placeholder="mi" />
-      <input class="ex-num ex-dur" inputmode="numeric" placeholder="min" />`;
-  if (kind === "activity") return `
-      <input class="ex-num ex-dur ex-wide" inputmode="numeric" placeholder="min" />`;
-  return `
-      <input class="ex-num ex-reps" inputmode="numeric" pattern="[0-9]*" placeholder="reps" />
-      <span class="ex-x">×</span>
-      <input class="ex-num ex-sets" inputmode="numeric" pattern="[0-9]*" placeholder="sets" />
-      <input class="ex-num ex-wt" inputmode="decimal" placeholder="lbs" />`;
+  if (kind === "cardio") return numBox("ex-dist", "mi", "decimal") + numBox("ex-dur", "min", "numeric");
+  if (kind === "activity") return numBox("ex-dur ex-wide", "min", "numeric");
+  return numBox("ex-reps", "reps", "numeric") + `<span class="ex-x">×</span>` + setControl() + numBox("ex-wt", "lbs", "decimal");
+}
+function renderSetMarks(btn) {
+  const n = +btn.dataset.count;
+  btn.querySelector(".set-marks").textContent = n === 0 ? "" : (n <= 6 ? "|".repeat(n) : n + "×");
+  btn.classList.toggle("has", n > 0);
+}
+function markFilled(row) {
+  const any = [...row.querySelectorAll(".ex-num")].some((x) => x.value) || (+(row.querySelector(".set-tap")?.dataset.count || 0) > 0);
+  row.classList.toggle("filled", any);
 }
 function sortedExercises() {
   const u = exUsage();
@@ -462,8 +473,13 @@ function renderGrid() {
       ${rowInputs(kindOf(e))}
     </div>`).join("");
   grid.querySelectorAll(".ex-row").forEach((row) => {
-    const nums = [...row.querySelectorAll(".ex-num")];
-    nums.forEach((n) => n.oninput = () => row.classList.toggle("filled", nums.some((x) => x.value)));
+    row.querySelectorAll(".ex-num").forEach((n) => n.oninput = () => markFilled(row));
+    const tap = row.querySelector(".set-tap");
+    if (tap) {
+      renderSetMarks(tap);
+      tap.onclick = () => { tap.dataset.count = +tap.dataset.count + 1; renderSetMarks(tap); markFilled(row); };
+      tap.querySelector(".set-clear").onclick = (e) => { e.stopPropagation(); tap.dataset.count = 0; renderSetMarks(tap); markFilled(row); };
+    }
     if (manageMode) {
       const id = row.dataset.id;
       row.querySelector(".ee-name").onchange = (ev) => updateExercise(id, { name: ev.target.value.trim() });
@@ -509,7 +525,10 @@ function gatherGridItems() {
     } else {
       const reps = Math.round(val(".ex-reps"));
       if (reps < 1) return;
-      let sets = Math.round(val(".ex-sets")); if (sets < 1) sets = 1;
+      let sets;
+      if (PREFS.setMode === "tap") { const b = row.querySelector(".set-tap"); sets = b ? +b.dataset.count : 0; }
+      else sets = Math.round(val(".ex-sets"));
+      if (sets < 1) sets = 1;
       const wt = val(".ex-wt");
       items.push({ kind: "set", abbr, reps, sets, weight: wt > 0 ? wt : null, raw: `${abbr}x${reps}x${sets}${wt > 0 ? "@" + wt : ""}` });
     }
@@ -518,6 +537,7 @@ function gatherGridItems() {
 }
 function clearGridInputs() {
   $("ex-grid").querySelectorAll(".ex-num").forEach((i) => (i.value = ""));
+  $("ex-grid").querySelectorAll(".set-tap").forEach((b) => { b.dataset.count = 0; renderSetMarks(b); });
   $("ex-grid").querySelectorAll(".ex-row").forEach((r) => r.classList.remove("filled"));
   const ex = document.querySelector(".log-card .extras"); if (ex) ex.open = false;
 }
@@ -784,6 +804,7 @@ function bind() {
   $("btn-settings").onclick = () => openSheet("settings");
   document.querySelectorAll("#set-theme .seg-btn").forEach((b) => b.onclick = () => { PREFS.theme = b.dataset.theme; savePrefs(); applyPrefs(); });
   $("set-quote").onclick = () => { PREFS.showQuote = !PREFS.showQuote; savePrefs(); applyPrefs(); };
+  $("set-tapsets").onclick = () => { PREFS.setMode = PREFS.setMode === "tap" ? "number" : "tap"; savePrefs(); applyPrefs(); renderGrid(); };
 
   $("log-date").value = todayStr();
   $("log-date").onchange = () => { const d = $("log-date").value || todayStr(); $("log-day-label").textContent = d === todayStr() ? "Today's workout" : prettyDate(d) + "'s workout"; };

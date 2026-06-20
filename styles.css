@@ -246,6 +246,19 @@ h1,h2,h3{margin:0}
 .ex-edit .ee-kind{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 6px;font-size:12px;flex:none}
 @media (max-width:360px){ .ex-num{width:42px} }
 
+/* labeled number boxes + tap-to-count sets */
+.numbox{display:inline-flex;flex-direction:column;align-items:center;gap:2px;flex:none}
+.nb-l{font-size:8px;color:var(--mut2);text-transform:uppercase;letter-spacing:.4px;line-height:1}
+.ex-row .ex-x{align-self:flex-end;padding-bottom:9px}
+.set-tap{position:relative;width:48px;height:36px;background:var(--card);border:1px solid var(--line);border-radius:8px;color:var(--amber2);font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;letter-spacing:2px;font-family:ui-monospace,monospace}
+.set-tap:active{transform:scale(.94)}
+.set-tap.has{border-color:var(--amber);background:#221d12}
+.set-marks{pointer-events:none;min-height:1em}
+.set-clear{position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--card2);border:1px solid var(--line);color:var(--txt);font-size:9px;line-height:1;display:none;align-items:center;justify-content:center;letter-spacing:0}
+.set-tap.has .set-clear{display:flex}
+body.light .set-tap.has{background:#fff6e4}
+.ex-row.managing .numbox,.ex-row.managing .set-tap{display:none}
+
 /* reorder (manage mode) */
 .ex-move{display:none;flex-direction:column;gap:2px;flex:none}
 .ex-row.managing .ex-move{display:flex}
