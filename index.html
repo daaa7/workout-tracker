@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#0f1115" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GROOVE" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>GROOVE — Workout Log</title>
+</head>
+<body>
+
+  <!-- ───────────── AUTH ───────────── -->
+  <section id="auth" class="auth hidden">
+    <div class="auth-card">
+      <div class="brand">
+        <span class="brand-mark">◆</span>
+        <h1>GROOVE</h1>
+      </div>
+      <p class="tagline">Get back in the groove. One day at a time.</p>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+      </div>
+
+      <div id="auth-error" class="auth-error hidden"></div>
+
+      <button id="btn-signin" class="btn btn-primary">Sign In</button>
+      <button id="btn-signup" class="btn btn-ghost">Create Account</button>
+      <p class="auth-hint">First time? Tap <b>Create Account</b>. You'll log in with the same details on your phone and computer — same data everywhere.</p>
+    </div>
+  </section>
+
+  <!-- ───────────── APP ───────────── -->
+  <section id="app" class="app hidden">
+    <header class="topbar">
+      <div class="brand-sm"><span class="brand-mark">◆</span> GROOVE</div>
+      <div class="topbar-right">
+        <span id="sync-dot" class="sync-dot" title="Synced"></span>
+        <button id="btn-signout" class="iconbtn" title="Sign out">⎋</button>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ===== LOG / TODAY ===== -->
+      <div id="view-log" class="view">
+        <div id="quote-card" class="quote-card">
+          <div class="quote-mark">"</div>
+          <p id="quote-text" class="quote-text"></p>
+          <p id="quote-author" class="quote-author"></p>
+        </div>
+
+        <div class="stat-strip">
+          <div class="stat"><div class="stat-num" id="s-streak">0</div><div class="stat-lbl">day streak</div></div>
+          <div class="stat"><div class="stat-num" id="s-week">0</div><div class="stat-lbl">this week</div></div>
+          <div class="stat"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">workouts</div></div>
+        </div>
+
+        <div class="card log-card">
+          <div class="log-head">
+            <h2>Log a workout</h2>
+            <input id="log-date" type="date" class="date-input" />
+          </div>
+          <textarea id="log-input" class="log-input" rows="3"
+            placeholder="BPx20x4, Cx15, SQTx30x|||, 10 min run"></textarea>
+          <div class="log-help">Type it like your calendar: <code>abbr × reps × sets</code>. Sets can be a number (<code>x4</code>) or tally marks (<code>x||||</code>). Separate moves with commas. Words like <code>REST</code> or <code>10 min run</code> log as notes.</div>
+          <button id="btn-preview" class="btn btn-primary">Review &amp; Log →</button>
+        </div>
+
+        <div class="recent">
+          <h3>Recent</h3>
+          <div id="recent-list" class="recent-list"></div>
+        </div>
+      </div>
+
+      <!-- ===== CALENDAR ===== -->
+      <div id="view-cal" class="view hidden">
+        <div class="cal-head">
+          <button id="cal-prev" class="iconbtn">‹</button>
+          <div class="cal-title" id="cal-title">—</div>
+          <button id="cal-next" class="iconbtn">›</button>
+        </div>
+        <button id="cal-today" class="btn btn-ghost btn-sm">Today</button>
+        <div class="cal-dow">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div id="cal-grid" class="cal-grid"></div>
+        <div class="cal-legend"><span class="dot-have"></span> logged day &nbsp;·&nbsp; tap any day to add or edit</div>
+      </div>
+
+      <!-- ===== STATS ===== -->
+      <div id="view-stats" class="view hidden">
+        <div class="card">
+          <h2>All-time</h2>
+          <div class="grid2">
+            <div class="kpi"><div class="kpi-num" id="k-workouts">0</div><div class="kpi-lbl">Workouts logged</div></div>
+            <div class="kpi"><div class="kpi-num" id="k-best">0</div><div class="kpi-lbl">Best streak (days)</div></div>
+            <div class="kpi"><div class="kpi-num" id="k-reps">0</div><div class="kpi-lbl">Total reps</div></div>
+            <div class="kpi"><div class="kpi-num" id="k-sets">0</div><div class="kpi-lbl">Total sets</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>This month</h2>
+          <div class="grid2">
+            <div class="kpi"><div class="kpi-num" id="k-mdays">0</div><div class="kpi-lbl">Days trained</div></div>
+            <div class="kpi"><div class="kpi-num" id="k-mreps">0</div><div class="kpi-lbl">Reps</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>By muscle group</h2>
+          <div id="cat-bars" class="cat-bars"></div>
+        </div>
+
+        <div class="card">
+          <h2>Top exercises</h2>
+          <div id="top-ex" class="top-ex"></div>
+        </div>
+
+        <div class="card">
+          <h2>Last 12 weeks</h2>
+          <div id="heatmap" class="heatmap"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-view="log">
+        <span class="nav-ic">✎</span><span>Log</span>
+      </button>
+      <button class="nav-btn" data-view="cal">
+        <span class="nav-ic">▦</span><span>Calendar</span>
+      </button>
+      <button class="nav-btn" data-view="stats">
+        <span class="nav-ic">▲</span><span>Stats</span>
+      </button>
+    </nav>
+  </section>
+
+  <!-- ───────────── DAY SHEET ───────────── -->
+  <div id="day-sheet" class="sheet-wrap hidden">
+    <div class="sheet-backdrop" data-close="day"></div>
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h2 id="day-title">Day</h2>
+        <button class="iconbtn" data-close="day">✕</button>
+      </div>
+      <div id="day-entries" class="day-entries"></div>
+      <textarea id="day-input" class="log-input" rows="2" placeholder="Add more: DLx30x3, ..."></textarea>
+      <button id="day-add" class="btn btn-primary">Add to this day →</button>
+    </div>
+  </div>
+
+  <!-- ───────────── PREVIEW / CONFIRM ───────────── -->
+  <div id="preview" class="sheet-wrap hidden">
+    <div class="sheet-backdrop" data-close="preview"></div>
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h2>Confirm</h2>
+        <button class="iconbtn" data-close="preview">✕</button>
+      </div>
+      <p class="preview-date" id="preview-date"></p>
+      <div id="preview-list" class="preview-list"></div>
+      <button id="preview-confirm" class="btn btn-primary">Log it ✓</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
