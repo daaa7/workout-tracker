@@ -427,7 +427,10 @@ let manageMode = false;
 function exUsage() { const u = {}; for (const l of STATE.logs) if (l.abbr) u[l.abbr] = (u[l.abbr] || 0) + 1; return u; }
 function kindOf(e) { return e.kind || "strength"; }
 function numBox(cls, label, mode) {
-  return `<label class="numbox"><span class="nb-l">${label}</span><input class="ex-num ${cls}" inputmode="${mode}" placeholder="" /></label>`;
+  // type=text + inputmode + pattern is the canonical recipe that forces the
+  // phone number pad (esp. on iOS) instead of the full keyboard.
+  const pat = mode === "numeric" ? ` pattern="[0-9]*"` : mode === "decimal" ? ` pattern="[0-9]*[.,]?[0-9]*"` : "";
+  return `<label class="numbox"><span class="nb-l">${label}</span><input type="text" class="ex-num ${cls}" inputmode="${mode}"${pat} placeholder="" /></label>`;
 }
 function setControl() {
   if (PREFS.setMode === "tap")
