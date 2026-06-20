@@ -62,21 +62,57 @@
           <p id="quote-author" class="quote-author"></p>
         </div>
 
-        <div class="stat-strip">
-          <div class="stat"><div class="stat-num" id="s-streak">0</div><div class="stat-lbl">day streak</div></div>
-          <div class="stat"><div class="stat-num" id="s-week">0</div><div class="stat-lbl">this week</div></div>
-          <div class="stat"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">workouts</div></div>
+        <!-- POINTS HERO -->
+        <div class="hero">
+          <div class="ring-wrap">
+            <svg viewBox="0 0 100 100" class="ring">
+              <circle class="ring-track" cx="50" cy="50" r="42"></circle>
+              <circle id="ring-prog" class="ring-prog" cx="50" cy="50" r="42"></circle>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-num" id="h-month">0</div>
+              <div class="ring-sub" id="h-monthname">pts</div>
+            </div>
+          </div>
+          <div class="hero-side">
+            <div class="rank" id="h-rank">Warming Up</div>
+            <div class="hero-stats">
+              <div class="hstat"><span class="hs-ic">🔥</span><b id="h-streak">0</b><span class="hs-l">streak</span></div>
+              <div class="hstat"><span class="hs-ic">⚡</span><b id="h-today">0</b><span class="hs-l">today</span></div>
+              <div class="hstat"><span class="hs-ic">🏆</span><b id="h-life">0</b><span class="hs-l">lifetime</span></div>
+            </div>
+            <div class="goal-line" id="h-goal">Goal: 0 / 400 this month</div>
+          </div>
         </div>
 
         <div class="card log-card">
           <div class="log-head">
-            <h2>Log a workout</h2>
+            <h2 id="log-day-label">Today's workout</h2>
             <input id="log-date" type="date" class="date-input" />
           </div>
-          <textarea id="log-input" class="log-input" rows="3"
-            placeholder="BPx20x4, Cx15, SQTx30x|||, 10 min run"></textarea>
-          <div class="log-help">Type it like your calendar: <code>abbr × reps × sets</code>. Sets can be a number (<code>x4</code>) or tally marks (<code>x||||</code>). Separate moves with commas. Words like <code>REST</code> or <code>10 min run</code> log as notes.</div>
-          <button id="btn-preview" class="btn btn-primary">Review &amp; Log →</button>
+
+          <div class="grid-head">
+            <span>Fill in what you did — reps &amp; sets</span>
+            <button id="btn-manage" class="link-btn">Manage moves</button>
+          </div>
+          <div id="ex-grid" class="ex-grid"></div>
+
+          <!-- add-exercise row (manage mode) -->
+          <div id="add-ex" class="add-ex hidden">
+            <input id="ax-abbr" class="ax-in ax-abbr" placeholder="ABBR" maxlength="8" />
+            <input id="ax-name" class="ax-in ax-name" placeholder="Full name (e.g. Bench Press)" />
+            <select id="ax-cat" class="ax-in ax-cat"></select>
+            <button id="ax-add" class="btn btn-primary btn-sm" style="margin:0">Add</button>
+          </div>
+
+          <details class="extras">
+            <summary>Extras / new moves — type shorthand</summary>
+            <textarea id="log-input" class="log-input" rows="2"
+              placeholder="DLx30x3, 10 min run, REST"></textarea>
+            <div class="log-help">Format <code>abbr×reps×sets</code> — sets as a number (<code>x4</code>) or tally (<code>x||||</code>), comma-separated. Words like <code>REST</code> log as notes. New abbreviation? It'll ask you to name it.</div>
+          </details>
+
+          <button id="btn-log" class="btn btn-primary">Log it →</button>
         </div>
 
         <div class="recent">
@@ -102,6 +138,26 @@
 
       <!-- ===== STATS ===== -->
       <div id="view-stats" class="view hidden">
+        <div class="card points-card">
+          <h2>Points</h2>
+          <div class="grid2">
+            <div class="kpi gold"><div class="kpi-num" id="k-life">0</div><div class="kpi-lbl">Lifetime (never resets)</div></div>
+            <div class="kpi gold"><div class="kpi-num" id="k-month">0</div><div class="kpi-lbl" id="k-monthlbl">This month</div></div>
+            <div class="kpi"><div class="kpi-num" id="k-rank">—</div><div class="kpi-lbl">Current rank</div></div>
+            <div class="kpi"><div class="kpi-num" id="k-bestmonth">0</div><div class="kpi-lbl">Best month</div></div>
+          </div>
+          <details class="extras" style="margin-top:14px">
+            <summary>How points work</summary>
+            <div class="points-help">
+              Auto-earned from real workouts — never minted:<br>
+              • Showed up <b>+20</b> · per exercise <b>+3</b> (cap 15) · volume <b>+1</b> / 50 reps (cap 10)<br>
+              • New move <b>+5</b> · 3× in a week <b>+30</b> · comeback after a break <b>+15</b><br>
+              • Streak multiplier on the day: 3d <b>×1.2</b> · 7d <b>×1.5</b> · 14d <b>×1.75</b> · 30d <b>×2</b><br>
+              <span class="muted">Monthly resets on the 1st (fresh start). Lifetime is your trophy room.</span>
+            </div>
+          </details>
+        </div>
+
         <div class="card">
           <h2>All-time</h2>
           <div class="grid2">
@@ -182,6 +238,17 @@
   </div>
 
   <div id="toast" class="toast hidden"></div>
+
+  <!-- ───────────── REWARD ───────────── -->
+  <div id="reward" class="reward-wrap hidden">
+    <div class="reward-card">
+      <div class="reward-burst">＋</div>
+      <div class="reward-pts"><span id="reward-num">0</span></div>
+      <div class="reward-lbl">points earned</div>
+      <div id="reward-parts" class="reward-parts"></div>
+      <div id="reward-msg" class="reward-msg"></div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>

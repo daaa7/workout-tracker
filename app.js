@@ -95,6 +95,8 @@ async function flushPending() {
       if (op.t === "insLog") { const { error } = await SB.from("wo_logs").insert(op.row); if (error) throw error; }
       else if (op.t === "delLog") { const { error } = await SB.from("wo_logs").delete().eq("id", op.id); if (error) throw error; }
       else if (op.t === "insEx") { const { error } = await SB.from("wo_exercises").insert(op.row); if (error) throw error; }
+      else if (op.t === "updEx") { const { error } = await SB.from("wo_exercises").update(op.fields).eq("id", op.id); if (error) throw error; }
+      else if (op.t === "delEx") { const { error } = await SB.from("wo_exercises").delete().eq("id", op.id); if (error) throw error; }
     } catch (e) { still.push(op); }
   }
   setPending(still);
@@ -204,7 +206,9 @@ async function deleteLog(id) {
 let pendingPreview = null; // {date, items}
 
 function openPreview(date, text) {
-  const items = parseLine(text);
+  openPreviewItems(date, parseLine(text));
+}
+function openPreviewItems(date, items) {
   if (!items.length) return toast("Nothing to log — type something first.", true);
   pendingPreview = { date, items };
   $("preview-date").textContent = prettyDate(date) + " · " + date;
@@ -246,11 +250,13 @@ async function confirmPreview() {
     const cat = el(`.pv-cat-in[data-i="${i}"]`).value;
     if (!DICT[it.abbr]) await upsertExercise(it.abbr, name, cat);
   }
+  const before = (pointsEngine()[date] || {}).total || 0;
   await commitLogs(date, items);
+  const day = pointsEngine()[date] || { total: 0, parts: [] };
   closeSheet("preview");
-  $("log-input").value = ""; $("day-input").value = "";
-  toast(`Logged ${items.length} ${items.length === 1 ? "move" : "moves"} ✓`);
+  clearGridInputs(); $("day-input").value = "";
   pendingPreview = null;
+  showReward(day.total - before, day.parts, date);
 }
 
 function guessName(abbr) {
@@ -271,10 +277,9 @@ function renderAll() { renderLog(); renderCalendar(); renderStats(); }
 
 function renderLog() {
   const st = computeStats();
-  $("s-streak").textContent = st.streak;
-  $("s-week").textContent = st.thisWeekDays;
-  $("s-total").textContent = st.totalDays;
   renderQuote(st);
+  renderHero(st);
+  renderGrid();
 
   // recent
   const dates = [...new Set(STATE.logs.map((l) => l.date))].sort().reverse().slice(0, 6);
@@ -287,6 +292,189 @@ function renderLog() {
       <div class="recent-moves">${escapeHtml(moves)}</div></div>`;
   }).join("");
   box.querySelectorAll(".recent-day").forEach((n) => n.onclick = () => openDay(n.dataset.day));
+}
+
+/* ════════════════════════════════════════════════════════════════
+   POINTS ENGINE — auto-derived from real logs (mirrors progress.py:
+   lifetime never resets + monthly resettable dopamine layer)
+   ════════════════════════════════════════════════════════════════ */
+const MONTHLY_GOAL = 400;
+const RANKS = [[0, "Warming Up"], [100, "Finding the Groove"], [250, "In the Groove"], [450, "Locked In"], [700, "Relentless"]];
+function rankFor(m) { let r = RANKS[0][1]; for (const [t, n] of RANKS) if (m >= t) r = n; return r; }
+function monthName() { return new Date().toLocaleDateString(undefined, { month: "short" }); }
+function weekKey(ds) { const d = parseYmd(ds); d.setDate(d.getDate() - d.getDay()); return ymd(d); }
+
+function pointsEngine() {
+  const dates = [...new Set(STATE.logs.map((l) => l.date))].sort();
+  const dateSet = new Set(dates);
+  const firstSeen = {};
+  for (const l of [...STATE.logs].sort((a, b) => (a.date + (a.created_at || "")) < (b.date + (b.created_at || "")) ? -1 : 1))
+    if (l.abbr && !(l.abbr in firstSeen)) firstSeen[l.abbr] = l.date;
+
+  const weekCount = {}; let prevDay = null; const res = {};
+  for (const date of dates) {
+    const dayLogs = logsByDate(date);
+    const hasSet = dayLogs.some((l) => l.abbr);
+    const notesOnly = !hasSet && dayLogs.some((l) => l.note);
+    const vol = dayLogs.reduce((s, l) => s + (l.reps || 0) * (l.sets || 0), 0);
+    const exCount = new Set(dayLogs.filter((l) => l.abbr).map((l) => l.abbr)).size;
+    const parts = [];
+    const base = hasSet ? 20 : (notesOnly ? 5 : 0);
+    if (base) parts.push([hasSet ? "Showed up" : "Logged activity", base]);
+    const exB = Math.min(exCount * 3, 15); if (exB) parts.push([`${exCount} exercise${exCount > 1 ? "s" : ""}`, exB]);
+    const volB = Math.min(Math.floor(vol / 50), 10); if (volB) parts.push([`${vol} reps volume`, volB]);
+    const newCount = new Set(dayLogs.filter((l) => l.abbr && firstSeen[l.abbr] === date).map((l) => l.abbr)).size;
+    const newB = newCount * 5; if (newB) parts.push([`${newCount} new move${newCount > 1 ? "s" : ""}`, newB]);
+    let comeback = 0;
+    if (prevDay) { const gap = (parseYmd(date) - parseYmd(prevDay)) / 86400000; if (gap >= 3) { comeback = 15; parts.push(["Comeback", 15]); } }
+    const subtotal = base + exB + volB + newB + comeback;
+    let streak = 0, dd = parseYmd(date); while (dateSet.has(ymd(dd))) { streak++; dd.setDate(dd.getDate() - 1); }
+    let mult = 1; if (streak >= 30) mult = 2; else if (streak >= 14) mult = 1.75; else if (streak >= 7) mult = 1.5; else if (streak >= 3) mult = 1.2;
+    let total = Math.round(subtotal * mult);
+    if (mult > 1) parts.push([`${streak}-day streak`, "×" + mult]);
+    if (hasSet) { const wk = weekKey(date); weekCount[wk] = (weekCount[wk] || 0) + 1; if (weekCount[wk] === 3) { total += 30; parts.push(["3× this week", 30]); } }
+    res[date] = { total, parts, mult, streak };
+    if (hasSet || notesOnly) prevDay = date;
+  }
+  return res;
+}
+function pointsAgg() {
+  const map = pointsEngine();
+  const mPrefix = `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}`;
+  let lifetime = 0, month = 0; const byMonth = {};
+  for (const d in map) { const v = map[d].total; lifetime += v; const mk = d.slice(0, 7); byMonth[mk] = (byMonth[mk] || 0) + v; if (d.startsWith(mPrefix)) month += v; }
+  return { lifetime, month, today: (map[todayStr()] || {}).total || 0, bestMonth: Math.max(0, ...Object.values(byMonth)), map };
+}
+
+function renderHero(st) {
+  const p = pointsAgg();
+  $("h-month").textContent = p.month;
+  $("h-monthname").textContent = monthName() + " pts";
+  $("h-life").textContent = p.lifetime.toLocaleString();
+  $("h-today").textContent = p.today;
+  $("h-streak").textContent = st.streak;
+  $("h-rank").textContent = rankFor(p.month);
+  $("h-goal").textContent = `Goal: ${p.month} / ${MONTHLY_GOAL} this month`;
+  $("ring-prog").style.strokeDashoffset = 263.9 * (1 - Math.min(p.month / MONTHLY_GOAL, 1));
+}
+
+/* ════════════════════════════════════════════════════════════════
+   EXERCISE GRID (primary logger) + MANAGE MODE
+   ════════════════════════════════════════════════════════════════ */
+let manageMode = false;
+function exUsage() { const u = {}; for (const l of STATE.logs) if (l.abbr) u[l.abbr] = (u[l.abbr] || 0) + 1; return u; }
+function renderGrid() {
+  const grid = $("ex-grid");
+  const u = exUsage();
+  const list = [...STATE.exercises].sort((a, b) => (u[b.abbr] || 0) - (u[a.abbr] || 0) || a.name.localeCompare(b.name));
+  if (!list.length) { grid.innerHTML = `<div class="day-empty">No moves yet — tap “Manage moves” to add yours.</div>`; return; }
+  grid.innerHTML = list.map((e) => `
+    <div class="ex-row${manageMode ? " managing" : ""}" data-id="${e.id}" data-abbr="${escapeHtml(e.abbr)}">
+      <div class="ex-name">${escapeHtml(e.name)}<span class="ex-ab">${escapeHtml(e.abbr)}</span></div>
+      <div class="ex-edit">
+        <input class="ee-abbr" value="${escapeHtml(e.abbr)}" maxlength="8" />
+        <input class="ee-name" value="${escapeHtml(e.name)}" />
+        <button class="ex-del" title="Delete">🗑</button>
+      </div>
+      <input class="ex-num ex-reps" inputmode="numeric" pattern="[0-9]*" placeholder="reps" />
+      <span class="ex-x">×</span>
+      <input class="ex-num ex-sets" inputmode="numeric" pattern="[0-9]*" placeholder="sets" />
+    </div>`).join("");
+  grid.querySelectorAll(".ex-row").forEach((row) => {
+    const reps = row.querySelector(".ex-reps");
+    reps.oninput = () => row.classList.toggle("filled", !!reps.value);
+    if (manageMode) {
+      const id = row.dataset.id;
+      row.querySelector(".ee-name").onchange = (ev) => updateExercise(id, { name: ev.target.value.trim() });
+      row.querySelector(".ee-abbr").onchange = (ev) => updateExercise(id, { abbr: ev.target.value.trim().toUpperCase() });
+      row.querySelector(".ex-del").onclick = () => { if (confirm("Delete this move? Your past logs stay.")) deleteExercise(id); };
+    }
+  });
+}
+function toggleManage() {
+  manageMode = !manageMode;
+  $("btn-manage").textContent = manageMode ? "Done" : "Manage moves";
+  $("add-ex").classList.toggle("hidden", !manageMode);
+  renderGrid();
+}
+async function addExerciseManage() {
+  const abbr = $("ax-abbr").value.trim().toUpperCase(), name = $("ax-name").value.trim(), cat = $("ax-cat").value;
+  if (!abbr || !name) return toast("Enter an abbreviation and a name.", true);
+  if (DICT[abbr]) return toast(`${abbr} already exists.`, true);
+  await upsertExercise(abbr, name, cat);
+  $("ax-abbr").value = ""; $("ax-name").value = "";
+  renderGrid(); toast(`Added ${abbr} · ${name}`);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LOG FLOW (grid + extras) + REWARD
+   ════════════════════════════════════════════════════════════════ */
+function gatherGridItems() {
+  const items = [];
+  $("ex-grid").querySelectorAll(".ex-row").forEach((row) => {
+    const reps = parseInt(row.querySelector(".ex-reps").value, 10);
+    if (!reps || reps < 1) return;
+    let sets = parseInt(row.querySelector(".ex-sets").value, 10); if (!sets || sets < 1) sets = 1;
+    const abbr = row.dataset.abbr;
+    items.push({ kind: "set", abbr, reps, sets, raw: `${abbr}x${reps}x${sets}` });
+  });
+  return items;
+}
+function clearGridInputs() {
+  $("ex-grid").querySelectorAll(".ex-num").forEach((i) => (i.value = ""));
+  $("ex-grid").querySelectorAll(".ex-row").forEach((r) => r.classList.remove("filled"));
+  $("log-input").value = "";
+  const ex = document.querySelector(".log-card .extras"); if (ex) ex.open = false;
+}
+function logToday() {
+  const date = $("log-date").value || todayStr();
+  let items = gatherGridItems();
+  const extra = $("log-input").value.trim();
+  if (extra) items = items.concat(parseLine(extra));
+  if (!items.length) return toast("Fill in reps for at least one move (or use the extras box).", true);
+  commitFlow(date, items);
+}
+async function commitFlow(date, items) {
+  const unknown = items.some((it) => it.kind === "set" && !DICT[it.abbr]);
+  if (unknown) { openPreviewItems(date, items); return; } // route through naming flow
+  const before = (pointsEngine()[date] || {}).total || 0;
+  await commitLogs(date, items);
+  const day = pointsEngine()[date] || { total: 0, parts: [] };
+  clearGridInputs();
+  showReward(day.total - before, day.parts, date);
+}
+
+let rewardTimer;
+function showReward(delta, parts, date) {
+  if (delta <= 0) { toast("Logged ✓"); return; }
+  $("reward-num").textContent = "0";
+  $("reward-parts").innerHTML = parts.map(([l, v]) => `<div>${escapeHtml(l)} <b>${typeof v === "number" ? "+" + v : v}</b></div>`).join("");
+  $("reward-msg").textContent = rewardMsg(computeStats().streak);
+  $("reward").classList.remove("hidden");
+  const dur = 750, t0 = performance.now();
+  (function step(t) { const k = Math.min((t - t0) / dur, 1); $("reward-num").textContent = Math.round(delta * k); if (k < 1) requestAnimationFrame(step); })(t0);
+  clearTimeout(rewardTimer); rewardTimer = setTimeout(hideReward, 3300);
+}
+function hideReward() { $("reward").classList.add("hidden"); }
+function rewardMsg(streak) {
+  if (streak >= 30) return "30+ days. This is who you are now.";
+  if (streak >= 14) return "Two weeks straight. Unstoppable.";
+  if (streak >= 7) return "A full week — the habit is locking in.";
+  if (streak >= 3) return `${streak} days in a row. Momentum is real.`;
+  if (streak === 1) return "You showed up. That's rep one.";
+  return "Logged. Keep it rolling.";
+}
+
+async function updateExercise(id, fields) {
+  const e = STATE.exercises.find((x) => x.id === id); if (!e) return;
+  Object.assign(e, fields); rebuildDict(); saveCache(); renderGrid();
+  try { const { error } = await SB.from("wo_exercises").update(fields).eq("id", id); if (error) throw error; }
+  catch (err) { queue({ t: "updEx", id, fields }); }
+}
+async function deleteExercise(id) {
+  STATE.exercises = STATE.exercises.filter((x) => x.id !== id); rebuildDict(); saveCache(); renderGrid();
+  try { const { error } = await SB.from("wo_exercises").delete().eq("id", id); if (error) throw error; }
+  catch (err) { queue({ t: "delEx", id }); }
 }
 
 function renderCalendar() {
@@ -315,6 +503,12 @@ function renderCalendar() {
 
 function renderStats() {
   const s = computeStats();
+  const p = pointsAgg();
+  $("k-life").textContent = p.lifetime.toLocaleString();
+  $("k-month").textContent = p.month.toLocaleString();
+  $("k-monthlbl").textContent = monthName() + " (resets 1st)";
+  $("k-rank").textContent = rankFor(p.month);
+  $("k-bestmonth").textContent = p.bestMonth.toLocaleString();
   $("k-workouts").textContent = s.totalDays;
   $("k-best").textContent = s.bestStreak;
   $("k-reps").textContent = s.totalReps.toLocaleString();
@@ -486,7 +680,12 @@ function bind() {
   $("btn-signout").onclick = signOut;
 
   $("log-date").value = todayStr();
-  $("btn-preview").onclick = () => openPreview($("log-date").value || todayStr(), $("log-input").value);
+  $("log-date").onchange = () => { const d = $("log-date").value || todayStr(); $("log-day-label").textContent = d === todayStr() ? "Today's workout" : prettyDate(d) + "'s workout"; };
+  $("btn-log").onclick = logToday;
+  $("btn-manage").onclick = toggleManage;
+  $("ax-cat").innerHTML = CATS.map((c) => `<option value="${c}">${c}</option>`).join("");
+  $("ax-add").onclick = addExerciseManage;
+  $("reward").onclick = hideReward;
 
   document.querySelectorAll(".nav-btn").forEach((b) => b.onclick = () => switchView(b.dataset.view));
   document.querySelectorAll("[data-close]").forEach((b) => b.onclick = () => closeSheet(b.dataset.close === "day" ? "day-sheet" : b.dataset.close));
