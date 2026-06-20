@@ -21,7 +21,7 @@ function demoToast() { toast("Demo mode is on — turn it off in Settings to mak
 
 /* ───────── preferences (device-level) ───────── */
 const PREFS_KEY = "groove_prefs";
-let PREFS = { theme: "dark", showQuote: true, setMode: "tap", textReps: false };
+let PREFS = { theme: "dark", showQuote: true, setMode: "tap", textReps: false, autoRest: false };
 function loadPrefs() { try { PREFS = { ...PREFS, ...(JSON.parse(localStorage.getItem(PREFS_KEY)) || {}) }; } catch (e) {} }
 function savePrefs() { localStorage.setItem(PREFS_KEY, JSON.stringify(PREFS)); }
 function applyPrefs() {
@@ -31,6 +31,7 @@ function applyPrefs() {
   const sw = $("set-quote"); if (sw) { sw.classList.toggle("on", PREFS.showQuote); sw.setAttribute("aria-checked", PREFS.showQuote); }
   const ts = $("set-tapsets"); if (ts) { const on = PREFS.setMode === "tap"; ts.classList.toggle("on", on); ts.setAttribute("aria-checked", on); }
   const tr = $("set-textreps"); if (tr) { tr.classList.toggle("on", PREFS.textReps); tr.setAttribute("aria-checked", PREFS.textReps); }
+  const ar = $("set-autorest"); if (ar) { ar.classList.toggle("on", PREFS.autoRest); ar.setAttribute("aria-checked", PREFS.autoRest); }
 }
 
 /* ───────── date helpers (local, no UTC drift) ───────── */
@@ -294,12 +295,13 @@ async function confirmPreview() {
     if (!DICT[it.abbr]) await upsertExercise(it.abbr, name, cat);
   }
   const before = (pointsEngine()[date] || {}).total || 0;
+  const prevPR = computePRs();
   await commitLogs(date, items);
   const day = pointsEngine()[date] || { total: 0, parts: [] };
   closeSheet("preview");
   clearGridInputs(); $("day-input").value = "";
   pendingPreview = null;
-  showReward(day.total - before, day.parts, date);
+  showReward(day.total - before, day.parts, date, newPRsFrom(items, prevPR));
 }
 
 function guessName(abbr) {
@@ -376,7 +378,7 @@ function pointsEngine() {
   for (const l of [...STATE.logs].sort((a, b) => (a.date + (a.created_at || "")) < (b.date + (b.created_at || "")) ? -1 : 1))
     if (l.abbr && !(l.abbr in firstSeen)) firstSeen[l.abbr] = l.date;
 
-  const weekCount = {}; let prevDay = null; const res = {};
+  const weekCount = {}, bestScore = {}; let prevDay = null; const res = {};
   for (const date of dates) {
     const dayLogs = logsByDate(date);
     const hasSet = dayLogs.some((l) => l.abbr);
@@ -396,7 +398,16 @@ function pointsEngine() {
     const newB = newCount * 5; if (newB) parts.push([`${newCount} new move${newCount > 1 ? "s" : ""}`, newB]);
     let comeback = 0;
     if (prevDay) { const gap = (parseYmd(date) - parseYmd(prevDay)) / 86400000; if (gap >= 3) { comeback = 15; parts.push(["Comeback", 15]); } }
-    const subtotal = base + exB + volB + cardioB + newB + comeback;
+    // personal-record bonus (beating your prior best on a lift; first-ever doesn't count)
+    const dayPR = new Set();
+    for (const l of dayLogs) {
+      if (!l.abbr || !l.reps || (DICT[l.abbr]?.kind || "strength") !== "strength") continue;
+      const sc = l.weight > 0 ? e1rm(l.weight, l.reps) : l.reps;
+      const prev = bestScore[l.abbr];
+      if (sc > (prev ?? -1)) { if (prev !== undefined) dayPR.add(l.abbr); bestScore[l.abbr] = sc; }
+    }
+    const prB = dayPR.size * 8; if (prB) parts.push([`${dayPR.size} PR${dayPR.size > 1 ? "s" : ""} 🏆`, prB]);
+    const subtotal = base + exB + volB + cardioB + newB + comeback + prB;
     let streak = 0, dd = parseYmd(date); while (dateSet.has(ymd(dd))) { streak++; dd.setDate(dd.getDate() - 1); }
     let mult = 1; if (streak >= 30) mult = 2; else if (streak >= 14) mult = 1.75; else if (streak >= 7) mult = 1.5; else if (streak >= 3) mult = 1.2;
     let total = Math.round(subtotal * mult);
@@ -538,7 +549,7 @@ function renderGrid() {
     const tap = row.querySelector(".set-tap");
     if (tap) {
       renderSetMarks(tap);
-      tap.onclick = () => { tap.dataset.count = +tap.dataset.count + 1; renderSetMarks(tap); markFilled(row); saveRowDraft(row); };
+      tap.onclick = () => { tap.dataset.count = +tap.dataset.count + 1; renderSetMarks(tap); markFilled(row); saveRowDraft(row); if (PREFS.autoRest) startRest(restDefault); };
       tap.querySelector(".set-clear").onclick = (e) => { e.stopPropagation(); tap.dataset.count = 0; renderSetMarks(tap); markFilled(row); saveRowDraft(row); };
     }
     if (manageMode) {
@@ -627,18 +638,21 @@ async function commitFlow(date, items) {
   const unknown = items.some((it) => it.kind === "set" && !DICT[it.abbr]);
   if (unknown) { openPreviewItems(date, items); return; } // route through naming flow
   const before = (pointsEngine()[date] || {}).total || 0;
+  const prevPR = computePRs();
   await commitLogs(date, items);
   const day = pointsEngine()[date] || { total: 0, parts: [] };
   clearGridInputs();
-  showReward(day.total - before, day.parts, date);
+  showReward(day.total - before, day.parts, date, newPRsFrom(items, prevPR));
 }
 
 let rewardTimer;
-function showReward(delta, parts, date) {
-  if (delta <= 0) { toast("Logged ✓"); return; }
+function showReward(delta, parts, date, prs) {
+  prs = prs || [];
+  if (delta <= 0 && !prs.length) { toast("Logged ✓"); return; }
   $("reward-num").textContent = "0";
   $("reward-parts").innerHTML = parts.map(([l, v]) => `<div>${escapeHtml(l)} <b>${typeof v === "number" ? "+" + v : v}</b></div>`).join("");
-  $("reward-msg").textContent = rewardMsg(computeStats().streak);
+  const prLine = prs.map((p) => `🏆 New PR · ${escapeHtml(p.name)} ${p.weight > 0 ? p.weight + " × " + p.reps : p.reps + " reps"}`).join("<br>");
+  $("reward-msg").innerHTML = (prLine ? `<div class="reward-pr">${prLine}</div>` : "") + escapeHtml(rewardMsg(computeStats().streak));
   $("reward").classList.remove("hidden");
   const dur = 750, t0 = performance.now();
   (function step(t) { const k = Math.min((t - t0) / dur, 1); $("reward-num").textContent = Math.round(delta * k); if (k < 1) requestAnimationFrame(step); })(t0);
@@ -731,6 +745,62 @@ function renderYear() {
   $("yr-summary").innerHTML = `<b>${days}</b> days trained · <b>${ypts.toLocaleString()}</b> pts in ${year}`;
 }
 
+/* ───── personal records (Epley est. 1RM for weighted; max reps for bodyweight) ───── */
+function e1rm(w, r) { return w * (1 + r / 30); }
+function computePRs() {
+  const pr = {};
+  for (const l of STATE.logs) {
+    if (!l.abbr || !l.reps) continue;
+    if ((DICT[l.abbr]?.kind || "strength") !== "strength") continue;
+    const sc = l.weight > 0 ? e1rm(l.weight, l.reps) : l.reps;
+    if (!pr[l.abbr] || sc > pr[l.abbr].score) pr[l.abbr] = { score: sc, weight: l.weight || 0, reps: l.reps, name: l.exercise || l.abbr, date: l.date };
+  }
+  return pr;
+}
+// PRs newly beaten by `items` vs best BEFORE the commit (first-ever doesn't count)
+function newPRsFrom(items, prevPR) {
+  const out = [], seen = {};
+  for (const it of items) {
+    if (it.kind !== "set" || !it.abbr || !it.reps) continue;
+    if ((DICT[it.abbr]?.kind || "strength") !== "strength") continue;
+    const prev = prevPR[it.abbr]?.score;
+    if (prev === undefined) continue;
+    const sc = it.weight > 0 ? e1rm(it.weight, it.reps) : it.reps;
+    if (sc > Math.max(prev, seen[it.abbr] || 0)) { out.push({ name: DICT[it.abbr]?.name || it.abbr, weight: it.weight || 0, reps: it.reps }); seen[it.abbr] = sc; }
+  }
+  return out;
+}
+
+/* ───── rest timer ───── */
+let restInt = null, restEnd = 0, restTotal = 0, restDefault = 90;
+function fmtMS(s) { return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function startRest(sec) {
+  clearInterval(restInt);
+  restDefault = sec; restTotal = sec; restEnd = Date.now() + sec * 1000;
+  $("rest-idle").classList.add("hidden"); $("rest-active").classList.remove("hidden");
+  tickRest(); restInt = setInterval(tickRest, 250);
+}
+function tickRest() {
+  const left = Math.max(0, Math.round((restEnd - Date.now()) / 1000));
+  $("rest-time").textContent = fmtMS(left);
+  $("rest-fill").style.width = (restTotal ? (left / restTotal) * 100 : 0) + "%";
+  if (left <= 0) { clearInterval(restInt); restDone(); }
+}
+function stopRest() { clearInterval(restInt); $("rest-active").classList.add("hidden"); $("rest-idle").classList.remove("hidden"); }
+function restDone() {
+  stopRest();
+  try { if (navigator.vibrate) navigator.vibrate([220, 90, 220]); } catch (e) {}
+  restBeep(); toast("Rest done — go 💪");
+}
+function restBeep() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    const a = new AC(), o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination); o.type = "sine"; o.frequency.value = 880; g.gain.value = 0.12;
+    o.start(); setTimeout(() => { o.stop(); a.close(); }, 360);
+  } catch (e) {}
+}
+
 const CAT_COLORS = { chest: "#f5a623", back: "#3ddc84", legs: "#5b8cff", shoulders: "#c77dff", arms: "#ff7d7d", core: "#ffd166", cardio: "#36c5d6", other: "#9aa2b3" };
 function rankProgress(m) {
   let cur = RANKS[0], next = null;
@@ -799,6 +869,12 @@ function renderStats() {
   $("top-ex").innerHTML = te.length
     ? te.map(([n, v]) => `<div class="top-row"><span class="tx-name">${escapeHtml(n)}</span><span class="tx-val">${v.toLocaleString()} reps</span></div>`).join("")
     : `<div class="empty-note">No data yet.</div>`;
+
+  // personal records
+  const prs = Object.values(computePRs()).sort((a, b) => b.score - a.score).slice(0, 8);
+  $("records").innerHTML = prs.length
+    ? prs.map((p) => `<div class="rec-row"><span class="rec-name">${escapeHtml(p.name)}</span><span class="rec-val">${p.weight > 0 ? `${p.weight} × ${p.reps}` : `${p.reps} reps`}<span class="rec-sub">${p.weight > 0 ? `~${Math.round(p.score)} est. 1RM` : "best set"} · ${prettyDate(p.date)}</span></span></div>`).join("")
+    : `<div class="empty-note">Log a weighted set to start setting records.</div>`;
 
   // 12-week heatmap (84 days)
   const set = new Set(STATE.logs.map((l) => l.date));
@@ -954,6 +1030,9 @@ function bind() {
   $("set-textreps").onclick = () => { PREFS.textReps = !PREFS.textReps; savePrefs(); applyPrefs(); renderGrid(); };
   $("set-demo").onclick = () => toggleDemo(!DEMO);
   $("demo-off").onclick = () => toggleDemo(false);
+  document.querySelectorAll(".rest-p").forEach((b) => b.onclick = () => startRest(+b.dataset.sec));
+  $("rest-stop").onclick = stopRest;
+  $("set-autorest").onclick = () => { PREFS.autoRest = !PREFS.autoRest; savePrefs(); applyPrefs(); };
   $("set-version").textContent = APP_VERSION;
   $("set-update").onclick = checkForUpdate;
   $("update-btn").onclick = applyUpdate;
@@ -1005,7 +1084,7 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v17";
+const APP_VERSION = "v18";
 let swReg = null, updating = false;
 function onUpdateReady() {
   $("update-bar")?.classList.remove("hidden");

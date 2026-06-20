@@ -94,6 +94,24 @@
           </div>
         </div>
 
+        <div class="card rest-card">
+          <div class="rest-top">
+            <span class="rest-title">⏱ Rest timer</span>
+            <label class="rest-auto">auto<button id="set-autorest" class="switch sm" role="switch" aria-checked="false"><span></span></button></label>
+          </div>
+          <div id="rest-idle" class="rest-presets">
+            <button class="rest-p" data-sec="60">1:00</button>
+            <button class="rest-p" data-sec="90">1:30</button>
+            <button class="rest-p" data-sec="120">2:00</button>
+            <button class="rest-p" data-sec="180">3:00</button>
+          </div>
+          <div id="rest-active" class="rest-active hidden">
+            <span class="rest-time" id="rest-time">0:00</span>
+            <div class="rest-bar"><div class="rest-fill" id="rest-fill"></div></div>
+            <button id="rest-stop" class="rest-stop">Stop</button>
+          </div>
+        </div>
+
         <div class="card log-card">
           <div class="log-head">
             <h2 id="log-day-label">Today's workout</h2>
@@ -201,6 +219,12 @@
         <div class="card">
           <h2>Top moves</h2>
           <div id="top-ex" class="top-ex"></div>
+        </div>
+
+        <!-- PERSONAL RECORDS -->
+        <div class="card">
+          <h2>🏆 Personal records</h2>
+          <div id="records" class="records"></div>
         </div>
 
         <!-- TROPHY ROOM (secondary) -->

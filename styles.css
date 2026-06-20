@@ -237,6 +237,7 @@ h1,h2,h3{margin:0}
 .reward-parts{margin-top:16px;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
 .reward-parts b{color:var(--txt)}
 .reward-msg{margin-top:14px;font-size:15px;color:var(--txt);font-weight:600;max-width:280px;margin-left:auto;margin-right:auto}
+.reward-pr{color:var(--amber2);font-weight:800;font-size:15px;margin-bottom:8px;line-height:1.5;text-shadow:0 0 12px rgba(245,166,35,.4)}
 
 /* ───── multi-type grid inputs ───── */
 .ex-num{width:48px}
@@ -302,6 +303,30 @@ body.light .set-tap.has{background:#fff6e4}
 /* ───── demo banner ───── */
 .demo-bar{display:flex;align-items:center;justify-content:center;gap:12px;background:#3a2e16;color:#ffc457;font-size:13px;font-weight:700;padding:8px 14px;border-bottom:1px solid var(--amber)}
 .demo-bar button{background:var(--amber);color:#1a1206;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
+
+/* ───── REST TIMER ───── */
+.rest-card{padding:14px 16px}
+.rest-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.rest-title{font-size:14px;font-weight:700;color:var(--txt)}
+.rest-auto{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.switch.sm{width:38px;height:22px}
+.switch.sm span{width:16px;height:16px}
+.switch.sm.on span{left:19px}
+.rest-presets{display:flex;gap:8px}
+.rest-p{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px 0;font-size:15px;font-weight:700;cursor:pointer}
+.rest-p:active{background:var(--card2);border-color:var(--amber)}
+.rest-active{display:flex;align-items:center;gap:12px}
+.rest-time{font-size:30px;font-weight:800;color:var(--amber2);font-variant-numeric:tabular-nums;min-width:74px}
+.rest-bar{flex:1;height:8px;background:var(--bg2);border-radius:6px;overflow:hidden}
+.rest-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--amber),var(--amber2));border-radius:6px;transition:width .25s linear}
+.rest-stop{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer}
+
+/* ───── PERSONAL RECORDS ───── */
+.records{display:flex;flex-direction:column;gap:8px}
+.rec-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.rec-name{font-size:14px;color:var(--txt);font-weight:600}
+.rec-val{font-size:14px;color:var(--amber2);font-weight:800;text-align:right}
+.rec-val .rec-sub{display:block;font-size:10px;color:var(--mut);font-weight:500}
 
 /* ───── STATS: momentum hero ───── */
 .stat-hero{position:relative;overflow:hidden;border-radius:var(--rad);padding:18px 18px 16px;margin-bottom:14px;background:linear-gradient(135deg,#2a1d09,#1b1f2a);border:1px solid #3a2e16}
