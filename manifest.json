@@ -1,6 +1,6 @@
 {
-  "name": "GROOVE — Workout Log",
-  "short_name": "GROOVE",
+  "name": "TackT — Workout Log",
+  "short_name": "TackT",
   "description": "Fast shorthand workout logging with calendar + streaks.",
   "start_url": "./",
   "scope": "./",

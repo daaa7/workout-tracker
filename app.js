@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════
-   GROOVE — Workout Log
+   TackT — Workout Log
    Phone-first PWA · Supabase sync · offline-tolerant
    ════════════════════════════════════════════════════════════════ */
 
@@ -271,7 +271,7 @@ function openPreviewItems(date, items) {
       box.className = "pv-item pv-new";
       box.innerHTML = `
         <span class="pv-new-tag">NEW · ${escapeHtml(it.abbr)}</span>
-        <div class="pv-calc" style="color:var(--mut);font-size:13px">${it.reps} × ${it.sets} reps — name it so GROOVE remembers:</div>
+        <div class="pv-calc" style="color:var(--mut);font-size:13px">${it.reps} × ${it.sets} reps — name it so TackT remembers:</div>
         <label>Exercise name</label>
         <input class="pv-name-in" data-i="${i}" placeholder="e.g. Bench Press" value="${guessName(it.abbr)}" />
         <label>Muscle group</label>
@@ -858,12 +858,12 @@ function computeStats() {
    ════════════════════════════════════════════════════════════════ */
 const QUOTES = {
   start: [
-    ["The hardest lift is the one off the couch. You're here — that's rep one.", "GROOVE"],
+    ["The hardest lift is the one off the couch. You're here — that's rep one.", "TackT"],
     ["You don't have to be great to start, but you have to start to be great.", "Zig Ziglar"],
     ["A year from now you'll wish you started today.", "Karen Lamb"],
   ],
   comeback: [
-    ["Missed a few days? The streak isn't the point — showing up again is.", "GROOVE"],
+    ["Missed a few days? The streak isn't the point — showing up again is.", "TackT"],
     ["Fall down seven times, stand up eight.", "Japanese Proverb"],
     ["The comeback is always stronger than the setback.", "Unknown"],
     ["It's not about perfect. It's about effort. Bring it today.", "Jillian Michaels"],
@@ -871,20 +871,20 @@ const QUOTES = {
   building: [
     ["Small daily improvements are the key to staggering long-term results.", "Unknown"],
     ["Discipline is choosing between what you want now and what you want most.", "Abraham Lincoln"],
-    ["Momentum is built one honest day at a time. Keep stacking.", "GROOVE"],
+    ["Momentum is built one honest day at a time. Keep stacking.", "TackT"],
     ["Motivation gets you started. Habit keeps you going.", "Jim Rohn"],
   ],
   strong: [
-    ["A week strong. The body adapts to what you repeat — keep feeding it.", "GROOVE"],
+    ["A week strong. The body adapts to what you repeat — keep feeding it.", "TackT"],
     ["Success isn't always about greatness. It's about consistency.", "Dwayne Johnson"],
     ["The pain you feel today is the strength you feel tomorrow.", "Arnold Schwarzenegger"],
     ["We are what we repeatedly do. Excellence is a habit.", "Aristotle"],
   ],
   beast: [
-    ["Three weeks deep. This isn't a phase anymore — it's who you are.", "GROOVE"],
+    ["Three weeks deep. This isn't a phase anymore — it's who you are.", "TackT"],
     ["The last three or four reps is what makes the muscle grow.", "Arnold Schwarzenegger"],
     ["Strength does not come from winning. Your struggles develop your strength.", "Arnold Schwarzenegger"],
-    ["You're not the same person who started. Keep proving it.", "GROOVE"],
+    ["You're not the same person who started. Keep proving it.", "TackT"],
   ],
 };
 function bucket(st) {
@@ -1005,7 +1005,7 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v16";
+const APP_VERSION = "v17";
 let swReg = null, updating = false;
 function onUpdateReady() {
   $("update-bar")?.classList.remove("hidden");
