@@ -45,3 +45,17 @@ create policy "wo_exercises_own" on public.wo_exercises
 
 create policy "wo_logs_own" on public.wo_logs
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- In-app feedback (reliable capture — no email client needed).
+-- Users can only INSERT their own feedback; nobody can read via the client
+-- (you read it in the Supabase dashboard / service role).
+create table if not exists public.wo_feedback (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references auth.users(id) on delete set null,
+  email       text,
+  message     text not null,
+  created_at  timestamptz not null default now()
+);
+alter table public.wo_feedback enable row level security;
+create policy "wo_feedback_insert_own" on public.wo_feedback
+  for insert to authenticated with check (auth.uid() = user_id);

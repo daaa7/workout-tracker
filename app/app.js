@@ -1039,6 +1039,15 @@ function bind() {
   $("rest-sound").onclick = () => { PREFS.restSound = !PREFS.restSound; savePrefs(); applyPrefs(); toast(PREFS.restSound ? "Beep on" : "Beep off"); };
   $("rest-vibe").onclick = () => { PREFS.restVibrate = !PREFS.restVibrate; savePrefs(); applyPrefs(); toast(PREFS.restVibrate ? "Buzz on" : "Buzz off"); };
   $("set-version").textContent = APP_VERSION;
+  $("fb-send").onclick = async () => {
+    const ta = $("fb-text"), msg = (ta.value || "").trim();
+    if (!msg) return toast("Type a little something first.", true);
+    const btn = $("fb-send"); btn.disabled = true;
+    const { error } = await SB.from("wo_feedback").insert({ user_id: USER?.id, email: USER?.email || null, message: msg });
+    btn.disabled = false;
+    if (error) return toast("Couldn't send — check your connection and try again.", true);
+    ta.value = ""; toast("Thanks — we got it! 🙌");
+  };
   $("set-update").onclick = checkForUpdate;
   $("update-btn").onclick = applyUpdate;
 

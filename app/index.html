@@ -372,11 +372,12 @@
         <button id="set-update" class="seg-btn upd-btn">Check for updates</button>
       </div>
 
-      <div class="set-row">
+      <div class="set-row" style="flex-direction:column;align-items:stretch;gap:10px">
         <div class="set-label">Feedback &amp; help
-          <div class="set-sub">Something off, or an idea? Email us — we read everything.</div>
+          <div class="set-sub">Something off, or an idea? Send it right here — we read everything. Or email <a href="mailto:hello@gettackt.com" style="color:var(--amber2)">hello@gettackt.com</a>.</div>
         </div>
-        <a class="seg-btn upd-btn" href="mailto:hello@gettackt.com?subject=TackT%20feedback" target="_blank" rel="noopener">Send feedback</a>
+        <textarea id="fb-text" class="fb-text" rows="3" placeholder="What's on your mind?"></textarea>
+        <button id="fb-send" class="seg-btn upd-btn">Send feedback</button>
       </div>
 
       <div class="set-foot">TackT &middot; <a href="https://gettackt.com/privacy.html" target="_blank" rel="noopener" style="color:inherit">Privacy</a> &middot; <a href="https://gettackt.com/terms.html" target="_blank" rel="noopener" style="color:inherit">Terms</a></div>
