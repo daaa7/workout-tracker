@@ -17,7 +17,7 @@ let calCursor = null; // Date for the visible calendar month
 
 /* ───────── preferences (device-level) ───────── */
 const PREFS_KEY = "groove_prefs";
-let PREFS = { theme: "dark", showQuote: true, setMode: "tap" };
+let PREFS = { theme: "dark", showQuote: true, setMode: "tap", textReps: false };
 function loadPrefs() { try { PREFS = { ...PREFS, ...(JSON.parse(localStorage.getItem(PREFS_KEY)) || {}) }; } catch (e) {} }
 function savePrefs() { localStorage.setItem(PREFS_KEY, JSON.stringify(PREFS)); }
 function applyPrefs() {
@@ -26,6 +26,7 @@ function applyPrefs() {
   document.querySelectorAll("#set-theme .seg-btn").forEach((b) => b.classList.toggle("active", b.dataset.theme === PREFS.theme));
   const sw = $("set-quote"); if (sw) { sw.classList.toggle("on", PREFS.showQuote); sw.setAttribute("aria-checked", PREFS.showQuote); }
   const ts = $("set-tapsets"); if (ts) { const on = PREFS.setMode === "tap"; ts.classList.toggle("on", on); ts.setAttribute("aria-checked", on); }
+  const tr = $("set-textreps"); if (tr) { tr.classList.toggle("on", PREFS.textReps); tr.setAttribute("aria-checked", PREFS.textReps); }
 }
 
 /* ───────── date helpers (local, no UTC drift) ───────── */
@@ -198,7 +199,7 @@ async function commitLogs(date, items) {
     weight: it.weight ?? null,
     distance: it.distance ?? null,
     duration: it.duration ?? null,
-    note: it.kind === "note" ? it.note : null,
+    note: it.note || null,
     raw: it.raw,
   }));
   STATE.logs = [...rows, ...STATE.logs];
@@ -251,7 +252,9 @@ function openPreviewItems(date, items) {
     } else if (DICT[it.abbr]) {
       let detail;
       if (!it.reps && (it.duration || it.distance)) {
-        detail = [it.distance ? `${it.distance} mi` : "", it.duration ? `${it.duration} min` : ""].filter(Boolean).join(" · ");
+        detail = [it.distance ? `${it.distance} mi` : "", it.duration ? fmtDur(it.duration) : ""].filter(Boolean).join(" · ");
+      } else if (!it.reps && it.note) {
+        detail = `${escapeHtml(it.note)}${it.sets > 1 ? ` × ${it.sets}` : ""}${it.weight ? ` @ ${it.weight} lbs` : ""}`;
       } else {
         detail = `${it.reps} × ${it.sets} = ${it.reps * it.sets} reps${it.weight ? ` @ ${it.weight} lbs` : ""}`;
       }
@@ -300,15 +303,28 @@ function guessName(abbr) {
    RENDER
    ════════════════════════════════════════════════════════════════ */
 function logsByDate(date) { return STATE.logs.filter((l) => l.date === date); }
+function fmtDur(mins) {
+  if (!mins) return "";
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+}
 function moveLabel(l) {
-  if (l.note) return l.note;
   const nm = l.exercise || l.abbr;
+  // pure note (no exercise attached)
+  if (l.note && !l.abbr) return l.note;
   // cardio / activity (no reps, has time and/or distance)
-  if (!l.reps && (l.duration || l.distance)) {
+  if (l.abbr && !l.reps && (l.duration || l.distance)) {
     const bits = [];
     if (l.distance) bits.push(`${l.distance} mi`);
-    if (l.duration) bits.push(`${l.duration} min`);
+    if (l.duration) bits.push(fmtDur(l.duration));
     return `${nm} ${bits.join(" · ")}`;
+  }
+  // text reps (e.g. AMRAP / 8-12) stored in note
+  if (l.abbr && !l.reps && l.note) {
+    let s = `${nm} ${l.note}`;
+    if (l.sets > 1) s += ` × ${l.sets}`;
+    if (l.weight) s += ` @${l.weight}`;
+    return s;
   }
   let s = l.sets > 1 ? `${nm} ${l.reps}×${l.sets}` : `${nm} ${l.reps}`;
   if (l.weight) s += ` @${l.weight}`;
@@ -419,9 +435,9 @@ function setControl() {
   return numBox("ex-sets", "sets", "numeric");
 }
 function rowInputs(kind) {
-  if (kind === "cardio") return numBox("ex-dist", "mi", "decimal") + numBox("ex-dur", "min", "numeric");
-  if (kind === "activity") return numBox("ex-dur ex-wide", "min", "numeric");
-  return numBox("ex-reps", "reps", "numeric") + `<span class="ex-x">×</span>` + setControl() + numBox("ex-wt", "lbs", "decimal");
+  if (kind === "cardio") return numBox("ex-dist", "mi", "decimal") + numBox("ex-hr", "hr", "numeric") + numBox("ex-min", "min", "numeric");
+  if (kind === "activity") return numBox("ex-hr", "hr", "numeric") + numBox("ex-min", "min", "numeric");
+  return numBox("ex-reps", "reps", PREFS.textReps ? "text" : "numeric") + `<span class="ex-x">×</span>` + setControl() + numBox("ex-wt", "lbs", "decimal");
 }
 function renderSetMarks(btn) {
   const n = +btn.dataset.count;
@@ -474,9 +490,12 @@ function renderGrid() {
     </div>`).join("");
   grid.querySelectorAll(".ex-row").forEach((row) => {
     row.querySelectorAll(".ex-num").forEach((n) => n.oninput = () => {
-      n.value = n.inputMode === "decimal"
-        ? n.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1")  // weight/distance: digits + one dot
-        : n.value.replace(/[^0-9]/g, "");                              // reps/sets/min: whole numbers only
+      const freeText = n.classList.contains("ex-reps") && PREFS.textReps; // reps may hold AMRAP/8-12 etc.
+      if (!freeText) {
+        n.value = n.inputMode === "decimal"
+          ? n.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1")  // weight/distance: digits + one dot
+          : n.value.replace(/[^0-9]/g, "");                              // sets/min: whole numbers only
+      }
       markFilled(row);
     });
     const tap = row.querySelector(".set-tap");
@@ -520,22 +539,25 @@ function gatherGridItems() {
     const abbr = row.dataset.abbr, kind = row.dataset.kind;
     const val = (sel) => { const el = row.querySelector(sel); const n = el ? parseFloat(el.value) : NaN; return isNaN(n) ? 0 : n; };
     if (kind === "cardio") {
-      const dist = val(".ex-dist"), dur = Math.round(val(".ex-dur"));
+      const dist = val(".ex-dist"), dur = Math.round(val(".ex-hr")) * 60 + Math.round(val(".ex-min"));
       if (dist <= 0 && dur <= 0) return;
       items.push({ kind: "set", abbr, reps: 0, sets: 0, distance: dist > 0 ? dist : null, duration: dur > 0 ? dur : null, raw: `${abbr} ${dist > 0 ? dist + "mi " : ""}${dur > 0 ? dur + "min" : ""}`.trim() });
     } else if (kind === "activity") {
-      const dur = Math.round(val(".ex-dur"));
+      const dur = Math.round(val(".ex-hr")) * 60 + Math.round(val(".ex-min"));
       if (dur <= 0) return;
       items.push({ kind: "set", abbr, reps: 0, sets: 0, duration: dur, raw: `${abbr} ${dur}min` });
     } else {
-      const reps = Math.round(val(".ex-reps"));
-      if (reps < 1) return;
+      const repsRaw = (row.querySelector(".ex-reps").value || "").trim();
+      if (!repsRaw) return;
+      const numeric = /^\d+$/.test(repsRaw);          // plain number → save as number
+      const reps = numeric ? parseInt(repsRaw, 10) : 0;
+      const repsText = numeric ? null : repsRaw;       // anything else (AMRAP, 8-12) → save as text
       let sets;
       if (PREFS.setMode === "tap") { const b = row.querySelector(".set-tap"); sets = b ? +b.dataset.count : 0; }
       else sets = Math.round(val(".ex-sets"));
       if (sets < 1) sets = 1;
       const wt = val(".ex-wt");
-      items.push({ kind: "set", abbr, reps, sets, weight: wt > 0 ? wt : null, raw: `${abbr}x${reps}x${sets}${wt > 0 ? "@" + wt : ""}` });
+      items.push({ kind: "set", abbr, reps, sets, weight: wt > 0 ? wt : null, note: repsText, raw: `${abbr}x${repsText || reps}x${sets}${wt > 0 ? "@" + wt : ""}` });
     }
   });
   return items;
@@ -810,6 +832,7 @@ function bind() {
   document.querySelectorAll("#set-theme .seg-btn").forEach((b) => b.onclick = () => { PREFS.theme = b.dataset.theme; savePrefs(); applyPrefs(); });
   $("set-quote").onclick = () => { PREFS.showQuote = !PREFS.showQuote; savePrefs(); applyPrefs(); };
   $("set-tapsets").onclick = () => { PREFS.setMode = PREFS.setMode === "tap" ? "number" : "tap"; savePrefs(); applyPrefs(); renderGrid(); };
+  $("set-textreps").onclick = () => { PREFS.textReps = !PREFS.textReps; savePrefs(); applyPrefs(); renderGrid(); };
 
   $("log-date").value = todayStr();
   $("log-date").onchange = () => { const d = $("log-date").value || todayStr(); $("log-day-label").textContent = d === todayStr() ? "Today's workout" : prettyDate(d) + "'s workout"; };
