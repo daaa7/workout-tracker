@@ -300,7 +300,7 @@ body.light .set-tap.has{background:#fff6e4}
 .yr-leg.l1{background:rgba(245,166,35,.28)}.yr-leg.l2{background:rgba(245,166,35,.5)}.yr-leg.l3{background:rgba(245,166,35,.75)}.yr-leg.l4{background:var(--amber)}
 
 /* ───── demo banner ───── */
-.demo-bar{display:flex;align-items:center;justify-content:center;gap:12px;background:#3a2e16;color:var(--amber2);font-size:13px;font-weight:700;padding:8px 14px;border-bottom:1px solid var(--amber)}
+.demo-bar{display:flex;align-items:center;justify-content:center;gap:12px;background:#3a2e16;color:#ffc457;font-size:13px;font-weight:700;padding:8px 14px;border-bottom:1px solid var(--amber)}
 .demo-bar button{background:var(--amber);color:#1a1206;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
 
 /* ───── STATS: momentum hero ───── */
@@ -343,7 +343,7 @@ body.light .set-tap.has{background:#fff6e4}
 
 /* update banner + button */
 .update-bar{display:flex;align-items:center;justify-content:center;gap:12px;background:linear-gradient(135deg,var(--amber),var(--amber2));color:#1a1206;font-size:13px;font-weight:700;padding:9px 14px;padding-top:max(9px,env(safe-area-inset-top))}
-.update-bar button{background:#1a1206;color:var(--amber2);border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.update-bar button{background:#1a1206;color:#ffc457;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer}
 .upd-btn{border:1px solid var(--line);border-radius:10px;color:var(--txt)}
 .upd-btn.ready{background:var(--amber);color:#1a1206;border-color:var(--amber)}
 
@@ -351,7 +351,16 @@ body.light .set-tap.has{background:#fff6e4}
 body.light{
   --bg:#eef1f5; --bg2:#ffffff; --card:#ffffff; --card2:#eef1f6;
   --line:#dfe3ea; --txt:#1b1f27; --mut:#5b6376; --mut2:#9aa2b3;
+  --amber2:#9a5b00; /* deep amber for TEXT in light mode (bright amber fails contrast on white) */
 }
+/* light-mode contrast fixes: amber only as fills behind dark text, deep amber for text */
+body.light .stat-hero{background:linear-gradient(135deg,#fff3df,#ffffff);border-color:#f0e3c4}
+body.light .sh-streak{background:rgba(0,0,0,.05)}
+body.light .sh-streak b{color:#c25e00}
+body.light .sh-bar,body.light .sh-bar-fill{}
+body.light .reward-pts{-webkit-text-fill-color:#b46a00;background:none;color:#b46a00}
+body.light .brand-mark{color:#c77400}
+body.light .quote-mark{color:#c77400}
 body.light .quote-card{background:linear-gradient(135deg,#fff7e8,#ffffff);border-color:#f0e3c4}
 body.light .ex-row.filled{background:#fff6e4;border-color:var(--amber)}
 body.light .kpi.gold{background:linear-gradient(135deg,#fff5e0,#ffffff);border-color:#f0e3c4}
