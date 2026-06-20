@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#0f1115" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TackT" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" href="icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>TackT — Workout Log</title>
+</head>
+<body>
+
+  <!-- ───────────── AUTH ───────────── -->
+  <section id="auth" class="auth hidden">
+    <div class="auth-card">
+      <div class="brand">
+        <span class="brand-mark">◆</span>
+        <h1>TackT</h1>
+      </div>
+      <p class="tagline">Get back in the groove. One day at a time.</p>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+      </div>
+
+      <div id="auth-error" class="auth-error hidden"></div>
+
+      <button id="btn-signin" class="btn btn-primary">Sign In</button>
+      <button id="btn-signup" class="btn btn-ghost">Create Account</button>
+      <p class="auth-hint">First time? Tap <b>Create Account</b>. You'll log in with the same details on your phone and computer — same data everywhere.</p>
+    </div>
+  </section>
+
+  <!-- ───────────── APP ───────────── -->
+  <section id="app" class="app hidden">
+    <div id="update-bar" class="update-bar hidden">
+      <span>New version ready</span>
+      <button id="update-btn">Update now</button>
+    </div>
+    <div id="demo-bar" class="demo-bar hidden">
+      <span>👁 Demo data — not saved</span>
+      <button id="demo-off">Turn off</button>
+    </div>
+    <header class="topbar">
+      <div class="brand-sm"><span class="brand-mark">◆</span> TackT</div>
+      <div class="topbar-right">
+        <span id="sync-dot" class="sync-dot" title="Synced"></span>
+        <button id="btn-settings" class="iconbtn" title="Settings">⚙</button>
+        <button id="btn-signout" class="iconbtn" title="Sign out">⎋</button>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ===== LOG / TODAY ===== -->
+      <div id="view-log" class="view">
+        <div id="quote-card" class="quote-card">
+          <div class="quote-mark">"</div>
+          <p id="quote-text" class="quote-text"></p>
+          <p id="quote-author" class="quote-author"></p>
+        </div>
+
+        <!-- POINTS HERO -->
+        <div class="hero">
+          <div class="ring-wrap">
+            <svg viewBox="0 0 100 100" class="ring">
+              <circle class="ring-track" cx="50" cy="50" r="42"></circle>
+              <circle id="ring-prog" class="ring-prog" cx="50" cy="50" r="42"></circle>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-num" id="h-month">0</div>
+              <div class="ring-sub" id="h-monthname">pts</div>
+            </div>
+          </div>
+          <div class="hero-side">
+            <div class="rank" id="h-rank">Warming Up</div>
+            <div class="hero-stats">
+              <div class="hstat"><span class="hs-ic">🔥</span><b id="h-streak">0</b><span class="hs-l">streak</span></div>
+              <div class="hstat"><span class="hs-ic">⚡</span><b id="h-today">0</b><span class="hs-l">today</span></div>
+              <div class="hstat"><span class="hs-ic">🏆</span><b id="h-life">0</b><span class="hs-l">lifetime</span></div>
+            </div>
+            <div class="goal-line" id="h-goal">Goal: 0 / 400 this month</div>
+          </div>
+        </div>
+
+        <div class="card rest-card">
+          <div class="rest-top">
+            <span class="rest-title">⏱ Rest timer</span>
+            <div class="rest-ctrls">
+              <button id="rest-sound" class="rt-ic" title="Beep on/off">🔔</button>
+              <button id="rest-vibe" class="rt-ic" title="Vibrate on/off">📳</button>
+              <label class="rest-auto">auto<button id="set-autorest" class="switch sm" role="switch" aria-checked="false"><span></span></button></label>
+            </div>
+          </div>
+          <div id="rest-idle" class="rest-presets">
+            <button class="rest-p" data-sec="60">1:00</button>
+            <button class="rest-p" data-sec="90">1:30</button>
+            <button class="rest-p" data-sec="120">2:00</button>
+            <button class="rest-p" data-sec="180">3:00</button>
+          </div>
+          <div id="rest-active" class="rest-active hidden">
+            <span class="rest-time" id="rest-time">0:00</span>
+            <div class="rest-bar"><div class="rest-fill" id="rest-fill"></div></div>
+            <button id="rest-stop" class="rest-stop">Stop</button>
+          </div>
+        </div>
+
+        <div class="card log-card">
+          <div class="log-head">
+            <h2 id="log-day-label">Today's workout</h2>
+            <input id="log-date" type="date" class="date-input" />
+          </div>
+
+          <div class="grid-head">
+            <span>Fill in what you did — reps &amp; sets</span>
+            <button id="btn-manage" class="link-btn">Manage moves</button>
+          </div>
+          <div id="ex-grid" class="ex-grid"></div>
+
+          <!-- add-exercise row (manage mode) -->
+          <div id="add-ex" class="add-ex hidden">
+            <input id="ax-abbr" class="ax-in ax-abbr" placeholder="ABBR" maxlength="8" />
+            <input id="ax-name" class="ax-in ax-name" placeholder="Full name (e.g. Bench Press)" />
+            <select id="ax-cat" class="ax-in ax-cat"></select>
+            <select id="ax-kind" class="ax-in ax-kind"></select>
+            <button id="ax-add" class="btn btn-primary btn-sm" style="margin:0">Add</button>
+          </div>
+
+          <details class="extras">
+            <summary>+ Add a new move</summary>
+            <div class="add-ex" style="display:flex">
+              <input id="nm-abbr" class="ax-in ax-abbr" placeholder="ABBR" maxlength="8" />
+              <input id="nm-name" class="ax-in ax-name" placeholder="Full name (e.g. Pull-ups)" />
+              <select id="nm-cat" class="ax-in ax-cat"></select>
+              <select id="nm-kind" class="ax-in ax-kind"></select>
+              <button id="nm-add" class="btn btn-primary btn-sm" style="margin:0">Add</button>
+            </div>
+            <div class="log-help">It joins your list above with reps / sets / lbs boxes (or a time box, for an activity) — fill them in and tap <b>Log it</b>.</div>
+          </details>
+
+          <button id="btn-log" class="btn btn-primary">Log it →</button>
+        </div>
+
+        <div class="recent">
+          <h3>Recent</h3>
+          <div id="recent-list" class="recent-list"></div>
+        </div>
+      </div>
+
+      <!-- ===== CALENDAR ===== -->
+      <div id="view-cal" class="view hidden">
+        <div class="seg calmode" id="cal-mode">
+          <button data-cm="month" class="seg-btn active">Month</button>
+          <button data-cm="year" class="seg-btn">Year</button>
+        </div>
+
+        <div id="cal-month">
+          <div class="cal-head">
+            <button id="cal-prev" class="iconbtn">‹</button>
+            <div class="cal-title" id="cal-title">—</div>
+            <button id="cal-next" class="iconbtn">›</button>
+          </div>
+          <button id="cal-today" class="btn btn-ghost btn-sm">Today</button>
+          <div class="cal-dow">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div id="cal-grid" class="cal-grid"></div>
+          <div class="cal-legend"><span class="dot-have"></span> logged day &nbsp;·&nbsp; tap any day to add or edit</div>
+        </div>
+
+        <div id="cal-year" class="hidden">
+          <div class="cal-head">
+            <button id="yr-prev" class="iconbtn">‹</button>
+            <div class="cal-title" id="yr-title">—</div>
+            <button id="yr-next" class="iconbtn">›</button>
+          </div>
+          <div class="yr-summary" id="yr-summary"></div>
+          <div class="yr-scroll"><div class="yr-months" id="yr-months"></div><div class="yr-grid" id="yr-grid"></div></div>
+          <div class="cal-legend">Less <span class="yr-leg l1"></span><span class="yr-leg l2"></span><span class="yr-leg l3"></span><span class="yr-leg l4"></span> More &nbsp;·&nbsp; tap a day</div>
+        </div>
+      </div>
+
+      <!-- ===== STATS ===== -->
+      <div id="view-stats" class="view hidden">
+
+        <!-- MOMENTUM HERO -->
+        <div class="stat-hero">
+          <div class="sh-top">
+            <div class="sh-left">
+              <div class="sh-rank" id="sh-rank">Warming Up</div>
+              <div class="sh-month"><b id="sh-month">0</b> pts this month</div>
+            </div>
+            <div class="sh-streak"><span class="sh-flame">🔥</span><b id="sh-streak">0</b><span>day streak</span></div>
+          </div>
+          <div class="sh-bar"><div class="sh-bar-fill" id="sh-bar-fill"></div></div>
+          <div class="sh-next" id="sh-next">—</div>
+        </div>
+
+        <!-- MOMENTUM TREND -->
+        <div class="card">
+          <div class="h2row"><h2>Momentum · last 8 weeks</h2><span class="trend-delta" id="trend-delta"></span></div>
+          <div class="trend" id="trend"></div>
+        </div>
+
+        <!-- MUSCLE SPLIT -->
+        <div class="card">
+          <h2>By muscle group</h2>
+          <div id="cat-bars" class="cat-bars"></div>
+        </div>
+
+        <!-- TOP MOVES -->
+        <div class="card">
+          <h2>Top moves</h2>
+          <div id="top-ex" class="top-ex"></div>
+        </div>
+
+        <!-- PERSONAL RECORDS -->
+        <div class="card">
+          <h2>🏆 Personal records</h2>
+          <div id="records" class="records"></div>
+        </div>
+
+        <!-- TROPHY ROOM (secondary) -->
+        <div class="card trophy">
+          <h2>🏆 Trophy room</h2>
+          <div class="mini-kpis">
+            <div class="mk gold"><b id="k-life">0</b><span>lifetime pts</span></div>
+            <div class="mk gold"><b id="k-bestmonth">0</b><span>best month</span></div>
+            <div class="mk"><b id="k-best">0</b><span>best streak</span></div>
+            <div class="mk"><b id="k-workouts">0</b><span>workouts</span></div>
+            <div class="mk"><b id="k-reps">0</b><span>total reps</span></div>
+            <div class="mk"><b id="k-sets">0</b><span>total sets</span></div>
+          </div>
+          <details class="extras" style="margin-top:14px">
+            <summary>How points work</summary>
+            <div class="points-help">
+              Auto-earned from real workouts — never minted:<br>
+              • Showed up <b>+20</b> · per exercise <b>+3</b> (cap 15) · volume <b>+1</b> / 50 reps (cap 10)<br>
+              • New move <b>+5</b> · 3× in a week <b>+30</b> · comeback after a break <b>+15</b><br>
+              • Streak multiplier on the day: 3d <b>×1.2</b> · 7d <b>×1.5</b> · 14d <b>×1.75</b> · 30d <b>×2</b><br>
+              <span class="muted">Monthly resets on the 1st (fresh start). Lifetime is your trophy room.</span>
+            </div>
+          </details>
+        </div>
+
+        <!-- 12-WEEK HEATMAP -->
+        <div class="card">
+          <h2>Last 12 weeks</h2>
+          <div id="heatmap" class="heatmap"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-view="log">
+        <span class="nav-ic">✎</span><span>Log</span>
+      </button>
+      <button class="nav-btn" data-view="cal">
+        <span class="nav-ic">▦</span><span>Calendar</span>
+      </button>
+      <button class="nav-btn" data-view="stats">
+        <span class="nav-ic">▲</span><span>Stats</span>
+      </button>
+    </nav>
+  </section>
+
+  <!-- ───────────── DAY SHEET ───────────── -->
+  <div id="day-sheet" class="sheet-wrap hidden">
+    <div class="sheet-backdrop" data-close="day"></div>
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h2 id="day-title">Day</h2>
+        <button class="iconbtn" data-close="day">✕</button>
+      </div>
+      <div id="day-entries" class="day-entries"></div>
+      <textarea id="day-input" class="log-input" rows="2" placeholder="Add more: DLx30x3, ..."></textarea>
+      <button id="day-add" class="btn btn-primary">Add to this day →</button>
+    </div>
+  </div>
+
+  <!-- ───────────── PREVIEW / CONFIRM ───────────── -->
+  <div id="preview" class="sheet-wrap hidden">
+    <div class="sheet-backdrop" data-close="preview"></div>
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h2>Confirm</h2>
+        <button class="iconbtn" data-close="preview">✕</button>
+      </div>
+      <p class="preview-date" id="preview-date"></p>
+      <div id="preview-list" class="preview-list"></div>
+      <button id="preview-confirm" class="btn btn-primary">Log it ✓</button>
+    </div>
+  </div>
+
+  <!-- ───────────── SETTINGS ───────────── -->
+  <div id="settings" class="sheet-wrap hidden">
+    <div class="sheet-backdrop" data-close="settings"></div>
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h2>Settings</h2>
+        <button class="iconbtn" data-close="settings">✕</button>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Theme</div>
+        <div class="seg" id="set-theme">
+          <button data-theme="dark" class="seg-btn active">Dark</button>
+          <button data-theme="light" class="seg-btn">Light</button>
+        </div>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Daily quote
+          <div class="set-sub">Show the motivational quote on the Log screen</div>
+        </div>
+        <button id="set-quote" class="switch on" role="switch" aria-checked="true"><span></span></button>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Tap to count sets
+          <div class="set-sub">Tap once per set (tally marks) instead of typing a number</div>
+        </div>
+        <button id="set-tapsets" class="switch on" role="switch" aria-checked="true"><span></span></button>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Allow text in reps
+          <div class="set-sub">Type things like AMRAP or 8-12; plain numbers still save as numbers</div>
+        </div>
+        <button id="set-textreps" class="switch" role="switch" aria-checked="false"><span></span></button>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Demo data (preview)
+          <div class="set-sub">Fill the app with a sample year to see how it looks — never saved, toggle off for your real data</div>
+        </div>
+        <button id="set-demo" class="switch" role="switch" aria-checked="false"><span></span></button>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Version <span id="set-version">—</span>
+          <div class="set-sub" id="set-update-sub">You're on the latest</div>
+        </div>
+        <button id="set-update" class="seg-btn upd-btn">Check for updates</button>
+      </div>
+
+      <div class="set-row">
+        <div class="set-label">Feedback &amp; help
+          <div class="set-sub">Something off, or an idea? Email us — we read everything.</div>
+        </div>
+        <a class="seg-btn upd-btn" href="mailto:hello@gettackt.com?subject=TackT%20feedback" target="_blank" rel="noopener">Send feedback</a>
+      </div>
+
+      <div class="set-foot">TackT &middot; <a href="https://gettackt.com/privacy.html" target="_blank" rel="noopener" style="color:inherit">Privacy</a></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ───────────── REWARD ───────────── -->
+  <div id="reward" class="reward-wrap hidden">
+    <div class="reward-card">
+      <div class="reward-burst">＋</div>
+      <div class="reward-pts"><span id="reward-num">0</span></div>
+      <div class="reward-lbl">points earned</div>
+      <div id="reward-parts" class="reward-parts"></div>
+      <div id="reward-msg" class="reward-msg"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

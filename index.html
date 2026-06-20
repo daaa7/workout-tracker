@@ -2,382 +2,328 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f1115" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="TackT" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon.svg" />
-  <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css" />
-  <title>TackT — Workout Log</title>
+
+  <title>TackT — The Free Workout Tracker for Getting Back in the Groove</title>
+  <meta name="description" content="A free, phone-first workout tracker for restarting your training. Log in seconds, watch your momentum build — no ads, no guilt. Get back in the groove." />
+  <link rel="canonical" href="https://gettackt.com/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://gettackt.com/" />
+  <meta property="og:title" content="TackT — Get back in the groove. One day at a time." />
+  <meta property="og:description" content="The honest workout tracker for people restarting. Fast shorthand logging, a calendar that shows your comeback, totally free. No ads, no pressure." />
+  <meta property="og:image" content="https://gettackt.com/app/icon-512.png" />
+  <meta name="twitter:card" content="summary" />
+
+  <link rel="icon" href="app/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="icon" href="app/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="app/apple-touch-icon.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --bg:#0f1115; --surface:#171a21; --raised:#1f242e;
+      --line:rgba(255,255,255,.08);
+      --gold1:#f5a623; --gold2:#ffc457; --green:#3ddc84;
+      --t1:#f4f5f7; --t2:#aab1bd; --t3:#6b7280;
+      --grad:linear-gradient(135deg,var(--gold1),var(--gold2));
+      --maxw:1080px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--t2);
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+      line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    h1,h2,h3{font-family:'Inter Tight',sans-serif;color:var(--t1);line-height:1.08;letter-spacing:-.02em}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+    .eyebrow{font-size:.8125rem;font-weight:500;text-transform:uppercase;letter-spacing:.12em;color:var(--t3)}
+
+    /* buttons */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      min-height:52px;padding:0 26px;border-radius:12px;font-family:'Inter Tight',sans-serif;
+      font-weight:800;font-size:1.0625rem;cursor:pointer;border:1px solid transparent;transition:transform .15s ease,filter .15s ease}
+    .btn-primary{background:var(--grad);color:#0f1115}            /* near-black label — AA safe on gold */
+    .btn-primary:hover{transform:translateY(-2px);filter:brightness(1.05)}
+    .btn-ghost{background:transparent;color:var(--t1);border-color:var(--line)}
+    .btn-ghost:hover{border-color:rgba(255,255,255,.25)}
+    a:focus-visible,button:focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
+
+    /* sticky top nav */
+    .nav{position:sticky;top:0;z-index:40;background:rgba(15,17,21,.82);backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--line)}
+    .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
+    .brand{display:flex;align-items:center;gap:9px;font-family:'Inter Tight',sans-serif;font-weight:800;font-size:1.2rem;color:var(--t1)}
+    .mark{color:var(--gold1);filter:drop-shadow(0 0 9px rgba(245,166,35,.5))}
+    .nav .btn{min-height:42px;font-size:.95rem;padding:0 18px}
+
+    /* hero */
+    .hero{min-height:calc(88svh - 62px);display:flex;align-items:center;padding:48px 0 36px}
+    .hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:46px;align-items:center;width:100%}
+    .hero h1{font-size:clamp(2.4rem,6vw,4rem);font-weight:800;margin:16px 0 18px}
+    .hero .sub{font-size:1.1rem;color:var(--t2);max-width:30ch;margin-bottom:28px}
+    .cta-row{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+    .cta-micro{font-size:.875rem;color:var(--t3);max-width:38ch;line-height:1.5}
+    .cta-micro b{color:var(--t2);font-weight:600}
+
+    /* tick row — the "takt" pulse */
+    .ticks{display:flex;gap:10px;margin:6px 0 22px;height:14px;align-items:center}
+    .ticks i{width:2px;height:10px;background:var(--gold1);opacity:.28;border-radius:2px;display:block;
+      animation:pulse 3.6s ease-in-out infinite}
+    .ticks i:nth-child(odd){height:14px}
+    @keyframes pulse{0%,100%{opacity:.18}50%{opacity:.85}}
+    .ticks i:nth-child(1){animation-delay:0s}.ticks i:nth-child(2){animation-delay:.18s}
+    .ticks i:nth-child(3){animation-delay:.36s}.ticks i:nth-child(4){animation-delay:.54s}
+    .ticks i:nth-child(5){animation-delay:.72s}.ticks i:nth-child(6){animation-delay:.9s}
+    .ticks i:nth-child(7){animation-delay:1.08s}.ticks i:nth-child(8){animation-delay:1.26s}
+    .ticks i:nth-child(9){animation-delay:1.44s}.ticks i:nth-child(10){animation-delay:1.62s}
+
+    /* phone mockup (CSS-only — the activation moment: filled grid + streak) */
+    .phone-wrap{display:flex;justify-content:center}
+    .phone{width:248px;border-radius:34px;border:1px solid var(--line);background:linear-gradient(180deg,#13161d,#0c0e13);
+      padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 6px rgba(255,255,255,.02)}
+    .phone .scr{border-radius:22px;background:var(--bg);border:1px solid var(--line);padding:16px 14px;overflow:hidden}
+    .scr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .scr-top .b{display:flex;align-items:center;gap:6px;font-family:'Inter Tight',sans-serif;font-weight:800;color:var(--t1);font-size:.95rem}
+    .streak{font-family:'Inter Tight',sans-serif;font-weight:800;font-size:.8rem;color:var(--green);
+      border:1px solid rgba(61,220,132,.35);background:rgba(61,220,132,.08);border-radius:20px;padding:3px 9px}
+    .scr-lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:8px}
+    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+    .grid span{aspect-ratio:1;border-radius:6px;background:var(--raised)}
+    .grid span.on{background:var(--grad)}
+    .grid span.today{box-shadow:0 0 0 2px var(--green)}
+    .scr-foot{margin-top:14px;display:flex;align-items:center;justify-content:space-between}
+    .scr-foot .rank{font-size:.72rem;color:var(--t2)}
+    .scr-foot .rank b{color:var(--gold2);font-family:'Inter Tight',sans-serif}
+    .scr-foot .pts{font-family:'Inter Tight',sans-serif;font-weight:800;color:var(--t1);font-size:1rem}
+
+    /* sections */
+    section{padding:84px 0;border-top:1px solid var(--line)}
+    .sec-head{text-align:center;max-width:34ch;margin:0 auto 44px}
+    .sec-head h2{font-size:clamp(1.7rem,4vw,2.2rem);font-weight:700;margin-bottom:12px}
+    .sec-head p{color:var(--t2)}
+
+    .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .tile{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px 22px}
+    .tile .ti{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      font-size:1.1rem;margin-bottom:14px;background:rgba(245,166,35,.1);color:var(--gold2)}
+    .tile.green .ti{background:rgba(61,220,132,.1);color:var(--green)}
+    .tile h3{font-size:1.1rem;font-weight:700;margin-bottom:7px}
+    .tile p{font-size:.95rem}
+
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;counter-reset:s}
+    .step{position:relative;padding-top:8px}
+    .step .n{font-family:'Inter Tight',sans-serif;font-weight:800;font-size:1.05rem;width:34px;height:34px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;background:var(--raised);color:var(--gold2);margin-bottom:14px}
+    .step h3{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+    .step p{font-size:.95rem}
+
+    .founder{max-width:640px;margin:0 auto;text-align:center}
+    .founder blockquote{font-size:1.18rem;color:var(--t1);line-height:1.6;font-weight:500;margin-bottom:18px}
+    .founder cite{font-style:normal;color:var(--t3);font-size:.9rem}
+
+    .free{max-width:680px;margin:0 auto;text-align:center}
+    .free .big{font-family:'Inter Tight',sans-serif;font-weight:800;font-size:clamp(1.6rem,4vw,2rem);color:var(--t1);margin-bottom:14px}
+    .free p{margin-bottom:14px}
+    .free .pro{font-size:.92rem;color:var(--t3);border-top:1px solid var(--line);padding-top:18px;margin-top:24px}
+
+    .close{text-align:center}
+    .close .btn{margin-top:8px}
+
+    footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--t3);font-size:.875rem}
+    footer .wrap{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
+    footer .links{display:flex;gap:18px;flex-wrap:wrap}
+    footer a:hover{color:var(--t1)}
+    footer .fam{color:var(--t3)}
+
+    /* sticky mobile CTA */
+    .sticky-cta{position:fixed;left:0;right:0;bottom:0;z-index:50;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+      background:rgba(15,17,21,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+      transform:translateY(120%);transition:transform .28s ease;display:none}
+    .sticky-cta.show{transform:translateY(0)}
+    .sticky-cta .btn{width:100%}
+
+    @media(max-width:860px){
+      .hero{min-height:auto;padding:40px 0 28px}
+      .hero .wrap{grid-template-columns:1fr;gap:36px;text-align:center}
+      .hero .sub{max-width:none}
+      .cta-row{align-items:center}
+      .cta-micro{max-width:42ch;margin:0 auto}
+      .ticks{justify-content:center}
+      .phone-wrap{order:-1}
+      .tiles,.steps{grid-template-columns:1fr;gap:14px}
+      .nav .btn{display:none}              /* sticky bar handles CTA on mobile */
+      .sticky-cta{display:block}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    }
+  </style>
 </head>
 <body>
 
-  <!-- ───────────── AUTH ───────────── -->
-  <section id="auth" class="auth hidden">
-    <div class="auth-card">
-      <div class="brand">
-        <span class="brand-mark">◆</span>
-        <h1>TackT</h1>
-      </div>
-      <p class="tagline">Get back in the groove. One day at a time.</p>
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="TackT home"><span class="mark" aria-hidden="true">◆</span> TackT</a>
+      <a class="btn btn-primary" href="app/">Open TackT — Free</a>
+    </div>
+  </nav>
 
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" />
-      </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+  <!-- HERO -->
+  <header class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <span class="eyebrow">Workout tracker</span>
+        <h1>You've started over before. This time, just start.</h1>
+        <p class="sub">TackT is a quiet workout tracker for getting back in the groove — one day at a time. No guilt about the days you missed. No streak yelling at you. Just today.</p>
+        <div class="ticks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="cta-row">
+          <a class="btn btn-primary" id="hero-cta" href="app/">Open TackT — Free</a>
+          <p class="cta-micro">No app store, no account, no download. TackT opens right in your browser — tap <b>Add to Home Screen</b> and it lives next to your other apps, works offline, and never costs a thing.</p>
+        </div>
       </div>
 
-      <div id="auth-error" class="auth-error hidden"></div>
+      <div class="phone-wrap">
+        <div class="phone" role="img" aria-label="TackT app showing a calendar grid filling in with logged workouts and a 1-day streak.">
+          <div class="scr">
+            <div class="scr-top">
+              <span class="b"><span class="mark" aria-hidden="true">◆</span> June</span>
+              <span class="streak">🔥 1 day</span>
+            </div>
+            <div class="scr-lbl">This month</div>
+            <div class="grid">
+              <span></span><span class="on"></span><span></span><span class="on"></span><span></span><span></span><span class="on"></span>
+              <span class="on"></span><span></span><span class="on"></span><span></span><span class="on"></span><span></span><span></span>
+              <span></span><span class="on"></span><span></span><span></span><span class="on"></span><span></span><span class="today"></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="scr-foot">
+              <span class="rank">Rank · <b>Finding the Groove</b></span>
+              <span class="pts">+23</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
 
-      <button id="btn-signin" class="btn btn-primary">Sign In</button>
-      <button id="btn-signup" class="btn btn-ghost">Create Account</button>
-      <p class="auth-hint">First time? Tap <b>Create Account</b>. You'll log in with the same details on your phone and computer — same data everywhere.</p>
+  <!-- THE RITUAL -->
+  <section id="why">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Built for the restart, not the perfect run</h2>
+        <p>The tool that expects you to fall off — and makes it easy to come back.</p>
+      </div>
+      <div class="tiles">
+        <div class="tile">
+          <div class="ti" aria-hidden="true">✎</div>
+          <h3>Log in your own shorthand</h3>
+          <p>Jot what you did in seconds — reps, sets, weight, a class, a run. Day one feels as easy as day forty.</p>
+        </div>
+        <div class="tile green">
+          <div class="ti" aria-hidden="true">▦</div>
+          <h3>See your streak, not your guilt</h3>
+          <p>A calendar grid that shows the days you showed up — filled squares, not red X's for the days you missed.</p>
+        </div>
+        <div class="tile">
+          <div class="ti" aria-hidden="true">◆</div>
+          <h3>No accounts to chase, no ads</h3>
+          <p>Free, private, and yours. Works offline, installs to your home screen, never nags you to upgrade.</p>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- ───────────── APP ───────────── -->
-  <section id="app" class="app hidden">
-    <div id="update-bar" class="update-bar hidden">
-      <span>New version ready</span>
-      <button id="update-btn">Update now</button>
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Three steps. None of them are "create an account."</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="n">1</div>
+          <h3>Open it</h3>
+          <p>Tap the button. TackT loads instantly in your browser — add it to your home screen if you want it one tap away.</p>
+        </div>
+        <div class="step">
+          <div class="n">2</div>
+          <h3>Log today</h3>
+          <p>Shorthand entry means a full workout takes seconds. No dropdowns to wrestle, no perfect form required. Just what you did.</p>
+        </div>
+        <div class="step">
+          <div class="n">3</div>
+          <h3>Watch it build</h3>
+          <p>Your calendar fills in, your momentum and rank climb, and the year heatmap turns from empty to unmistakably you. Showing up becomes the reward.</p>
+        </div>
+      </div>
     </div>
-    <div id="demo-bar" class="demo-bar hidden">
-      <span>👁 Demo data — not saved</span>
-      <button id="demo-off">Turn off</button>
-    </div>
-    <header class="topbar">
-      <div class="brand-sm"><span class="brand-mark">◆</span> TackT</div>
-      <div class="topbar-right">
-        <span id="sync-dot" class="sync-dot" title="Synced"></span>
-        <button id="btn-settings" class="iconbtn" title="Settings">⚙</button>
-        <button id="btn-signout" class="iconbtn" title="Sign out">⎋</button>
-      </div>
-    </header>
-
-    <main class="content">
-
-      <!-- ===== LOG / TODAY ===== -->
-      <div id="view-log" class="view">
-        <div id="quote-card" class="quote-card">
-          <div class="quote-mark">"</div>
-          <p id="quote-text" class="quote-text"></p>
-          <p id="quote-author" class="quote-author"></p>
-        </div>
-
-        <!-- POINTS HERO -->
-        <div class="hero">
-          <div class="ring-wrap">
-            <svg viewBox="0 0 100 100" class="ring">
-              <circle class="ring-track" cx="50" cy="50" r="42"></circle>
-              <circle id="ring-prog" class="ring-prog" cx="50" cy="50" r="42"></circle>
-            </svg>
-            <div class="ring-center">
-              <div class="ring-num" id="h-month">0</div>
-              <div class="ring-sub" id="h-monthname">pts</div>
-            </div>
-          </div>
-          <div class="hero-side">
-            <div class="rank" id="h-rank">Warming Up</div>
-            <div class="hero-stats">
-              <div class="hstat"><span class="hs-ic">🔥</span><b id="h-streak">0</b><span class="hs-l">streak</span></div>
-              <div class="hstat"><span class="hs-ic">⚡</span><b id="h-today">0</b><span class="hs-l">today</span></div>
-              <div class="hstat"><span class="hs-ic">🏆</span><b id="h-life">0</b><span class="hs-l">lifetime</span></div>
-            </div>
-            <div class="goal-line" id="h-goal">Goal: 0 / 400 this month</div>
-          </div>
-        </div>
-
-        <div class="card rest-card">
-          <div class="rest-top">
-            <span class="rest-title">⏱ Rest timer</span>
-            <div class="rest-ctrls">
-              <button id="rest-sound" class="rt-ic" title="Beep on/off">🔔</button>
-              <button id="rest-vibe" class="rt-ic" title="Vibrate on/off">📳</button>
-              <label class="rest-auto">auto<button id="set-autorest" class="switch sm" role="switch" aria-checked="false"><span></span></button></label>
-            </div>
-          </div>
-          <div id="rest-idle" class="rest-presets">
-            <button class="rest-p" data-sec="60">1:00</button>
-            <button class="rest-p" data-sec="90">1:30</button>
-            <button class="rest-p" data-sec="120">2:00</button>
-            <button class="rest-p" data-sec="180">3:00</button>
-          </div>
-          <div id="rest-active" class="rest-active hidden">
-            <span class="rest-time" id="rest-time">0:00</span>
-            <div class="rest-bar"><div class="rest-fill" id="rest-fill"></div></div>
-            <button id="rest-stop" class="rest-stop">Stop</button>
-          </div>
-        </div>
-
-        <div class="card log-card">
-          <div class="log-head">
-            <h2 id="log-day-label">Today's workout</h2>
-            <input id="log-date" type="date" class="date-input" />
-          </div>
-
-          <div class="grid-head">
-            <span>Fill in what you did — reps &amp; sets</span>
-            <button id="btn-manage" class="link-btn">Manage moves</button>
-          </div>
-          <div id="ex-grid" class="ex-grid"></div>
-
-          <!-- add-exercise row (manage mode) -->
-          <div id="add-ex" class="add-ex hidden">
-            <input id="ax-abbr" class="ax-in ax-abbr" placeholder="ABBR" maxlength="8" />
-            <input id="ax-name" class="ax-in ax-name" placeholder="Full name (e.g. Bench Press)" />
-            <select id="ax-cat" class="ax-in ax-cat"></select>
-            <select id="ax-kind" class="ax-in ax-kind"></select>
-            <button id="ax-add" class="btn btn-primary btn-sm" style="margin:0">Add</button>
-          </div>
-
-          <details class="extras">
-            <summary>+ Add a new move</summary>
-            <div class="add-ex" style="display:flex">
-              <input id="nm-abbr" class="ax-in ax-abbr" placeholder="ABBR" maxlength="8" />
-              <input id="nm-name" class="ax-in ax-name" placeholder="Full name (e.g. Pull-ups)" />
-              <select id="nm-cat" class="ax-in ax-cat"></select>
-              <select id="nm-kind" class="ax-in ax-kind"></select>
-              <button id="nm-add" class="btn btn-primary btn-sm" style="margin:0">Add</button>
-            </div>
-            <div class="log-help">It joins your list above with reps / sets / lbs boxes (or a time box, for an activity) — fill them in and tap <b>Log it</b>.</div>
-          </details>
-
-          <button id="btn-log" class="btn btn-primary">Log it →</button>
-        </div>
-
-        <div class="recent">
-          <h3>Recent</h3>
-          <div id="recent-list" class="recent-list"></div>
-        </div>
-      </div>
-
-      <!-- ===== CALENDAR ===== -->
-      <div id="view-cal" class="view hidden">
-        <div class="seg calmode" id="cal-mode">
-          <button data-cm="month" class="seg-btn active">Month</button>
-          <button data-cm="year" class="seg-btn">Year</button>
-        </div>
-
-        <div id="cal-month">
-          <div class="cal-head">
-            <button id="cal-prev" class="iconbtn">‹</button>
-            <div class="cal-title" id="cal-title">—</div>
-            <button id="cal-next" class="iconbtn">›</button>
-          </div>
-          <button id="cal-today" class="btn btn-ghost btn-sm">Today</button>
-          <div class="cal-dow">
-            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-          </div>
-          <div id="cal-grid" class="cal-grid"></div>
-          <div class="cal-legend"><span class="dot-have"></span> logged day &nbsp;·&nbsp; tap any day to add or edit</div>
-        </div>
-
-        <div id="cal-year" class="hidden">
-          <div class="cal-head">
-            <button id="yr-prev" class="iconbtn">‹</button>
-            <div class="cal-title" id="yr-title">—</div>
-            <button id="yr-next" class="iconbtn">›</button>
-          </div>
-          <div class="yr-summary" id="yr-summary"></div>
-          <div class="yr-scroll"><div class="yr-months" id="yr-months"></div><div class="yr-grid" id="yr-grid"></div></div>
-          <div class="cal-legend">Less <span class="yr-leg l1"></span><span class="yr-leg l2"></span><span class="yr-leg l3"></span><span class="yr-leg l4"></span> More &nbsp;·&nbsp; tap a day</div>
-        </div>
-      </div>
-
-      <!-- ===== STATS ===== -->
-      <div id="view-stats" class="view hidden">
-
-        <!-- MOMENTUM HERO -->
-        <div class="stat-hero">
-          <div class="sh-top">
-            <div class="sh-left">
-              <div class="sh-rank" id="sh-rank">Warming Up</div>
-              <div class="sh-month"><b id="sh-month">0</b> pts this month</div>
-            </div>
-            <div class="sh-streak"><span class="sh-flame">🔥</span><b id="sh-streak">0</b><span>day streak</span></div>
-          </div>
-          <div class="sh-bar"><div class="sh-bar-fill" id="sh-bar-fill"></div></div>
-          <div class="sh-next" id="sh-next">—</div>
-        </div>
-
-        <!-- MOMENTUM TREND -->
-        <div class="card">
-          <div class="h2row"><h2>Momentum · last 8 weeks</h2><span class="trend-delta" id="trend-delta"></span></div>
-          <div class="trend" id="trend"></div>
-        </div>
-
-        <!-- MUSCLE SPLIT -->
-        <div class="card">
-          <h2>By muscle group</h2>
-          <div id="cat-bars" class="cat-bars"></div>
-        </div>
-
-        <!-- TOP MOVES -->
-        <div class="card">
-          <h2>Top moves</h2>
-          <div id="top-ex" class="top-ex"></div>
-        </div>
-
-        <!-- PERSONAL RECORDS -->
-        <div class="card">
-          <h2>🏆 Personal records</h2>
-          <div id="records" class="records"></div>
-        </div>
-
-        <!-- TROPHY ROOM (secondary) -->
-        <div class="card trophy">
-          <h2>🏆 Trophy room</h2>
-          <div class="mini-kpis">
-            <div class="mk gold"><b id="k-life">0</b><span>lifetime pts</span></div>
-            <div class="mk gold"><b id="k-bestmonth">0</b><span>best month</span></div>
-            <div class="mk"><b id="k-best">0</b><span>best streak</span></div>
-            <div class="mk"><b id="k-workouts">0</b><span>workouts</span></div>
-            <div class="mk"><b id="k-reps">0</b><span>total reps</span></div>
-            <div class="mk"><b id="k-sets">0</b><span>total sets</span></div>
-          </div>
-          <details class="extras" style="margin-top:14px">
-            <summary>How points work</summary>
-            <div class="points-help">
-              Auto-earned from real workouts — never minted:<br>
-              • Showed up <b>+20</b> · per exercise <b>+3</b> (cap 15) · volume <b>+1</b> / 50 reps (cap 10)<br>
-              • New move <b>+5</b> · 3× in a week <b>+30</b> · comeback after a break <b>+15</b><br>
-              • Streak multiplier on the day: 3d <b>×1.2</b> · 7d <b>×1.5</b> · 14d <b>×1.75</b> · 30d <b>×2</b><br>
-              <span class="muted">Monthly resets on the 1st (fresh start). Lifetime is your trophy room.</span>
-            </div>
-          </details>
-        </div>
-
-        <!-- 12-WEEK HEATMAP -->
-        <div class="card">
-          <h2>Last 12 weeks</h2>
-          <div id="heatmap" class="heatmap"></div>
-        </div>
-      </div>
-
-    </main>
-
-    <nav class="bottom-nav">
-      <button class="nav-btn active" data-view="log">
-        <span class="nav-ic">✎</span><span>Log</span>
-      </button>
-      <button class="nav-btn" data-view="cal">
-        <span class="nav-ic">▦</span><span>Calendar</span>
-      </button>
-      <button class="nav-btn" data-view="stats">
-        <span class="nav-ic">▲</span><span>Stats</span>
-      </button>
-    </nav>
   </section>
 
-  <!-- ───────────── DAY SHEET ───────────── -->
-  <div id="day-sheet" class="sheet-wrap hidden">
-    <div class="sheet-backdrop" data-close="day"></div>
-    <div class="sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-head">
-        <h2 id="day-title">Day</h2>
-        <button class="iconbtn" data-close="day">✕</button>
+  <!-- FOUNDER NOTE -->
+  <section id="story">
+    <div class="wrap">
+      <div class="founder">
+        <span class="eyebrow">Why this exists</span>
+        <blockquote style="margin-top:18px">"I built TackT because I kept falling off my own training and hated how every app made me feel about it — like the missed days were the whole story. This is the first app I've put out in public, so I kept it small and honest on purpose: log fast, see your rhythm, come back tomorrow. No big promises, no fake reviews, no streak guilt — just a calm place to get back in the groove."</blockquote>
+        <cite>— the builder behind TackT</cite>
       </div>
-      <div id="day-entries" class="day-entries"></div>
-      <textarea id="day-input" class="log-input" rows="2" placeholder="Add more: DLx30x3, ..."></textarea>
-      <button id="day-add" class="btn btn-primary">Add to this day →</button>
     </div>
-  </div>
+  </section>
 
-  <!-- ───────────── PREVIEW / CONFIRM ───────────── -->
-  <div id="preview" class="sheet-wrap hidden">
-    <div class="sheet-backdrop" data-close="preview"></div>
-    <div class="sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-head">
-        <h2>Confirm</h2>
-        <button class="iconbtn" data-close="preview">✕</button>
+  <!-- FREE / NO CATCH -->
+  <section id="free">
+    <div class="wrap">
+      <div class="free">
+        <div class="big">Free. Actually free.</div>
+        <p>No ads. No account walls. No "free trial" that bills you in 7 days. TackT is free today because the only thing that matters right now is that you start.</p>
+        <p class="pro">There's no catch. This is a first app from a solo builder, made lower-pressure on purpose. One day a Pro version might add deeper stats and extras — and if it does, <b style="color:var(--t2)">everything you're using today stays free</b>. You'll never log in to find your tracker held hostage behind a paywall.</p>
       </div>
-      <p class="preview-date" id="preview-date"></p>
-      <div id="preview-list" class="preview-list"></div>
-      <button id="preview-confirm" class="btn btn-primary">Log it ✓</button>
     </div>
-  </div>
+  </section>
 
-  <!-- ───────────── SETTINGS ───────────── -->
-  <div id="settings" class="sheet-wrap hidden">
-    <div class="sheet-backdrop" data-close="settings"></div>
-    <div class="sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-head">
-        <h2>Settings</h2>
-        <button class="iconbtn" data-close="settings">✕</button>
+  <!-- CLOSING CTA -->
+  <section id="start">
+    <div class="wrap close">
+      <div class="sec-head" style="margin-bottom:18px">
+        <h2>Today counts. Start where you are.</h2>
       </div>
-
-      <div class="set-row">
-        <div class="set-label">Theme</div>
-        <div class="seg" id="set-theme">
-          <button data-theme="dark" class="seg-btn active">Dark</button>
-          <button data-theme="light" class="seg-btn">Light</button>
-        </div>
-      </div>
-
-      <div class="set-row">
-        <div class="set-label">Daily quote
-          <div class="set-sub">Show the motivational quote on the Log screen</div>
-        </div>
-        <button id="set-quote" class="switch on" role="switch" aria-checked="true"><span></span></button>
-      </div>
-
-      <div class="set-row">
-        <div class="set-label">Tap to count sets
-          <div class="set-sub">Tap once per set (tally marks) instead of typing a number</div>
-        </div>
-        <button id="set-tapsets" class="switch on" role="switch" aria-checked="true"><span></span></button>
-      </div>
-
-      <div class="set-row">
-        <div class="set-label">Allow text in reps
-          <div class="set-sub">Type things like AMRAP or 8-12; plain numbers still save as numbers</div>
-        </div>
-        <button id="set-textreps" class="switch" role="switch" aria-checked="false"><span></span></button>
-      </div>
-
-      <div class="set-row">
-        <div class="set-label">Demo data (preview)
-          <div class="set-sub">Fill the app with a sample year to see how it looks — never saved, toggle off for your real data</div>
-        </div>
-        <button id="set-demo" class="switch" role="switch" aria-checked="false"><span></span></button>
-      </div>
-
-      <div class="set-row">
-        <div class="set-label">Version <span id="set-version">—</span>
-          <div class="set-sub" id="set-update-sub">You're on the latest</div>
-        </div>
-        <button id="set-update" class="seg-btn upd-btn">Check for updates</button>
-      </div>
-
-      <div class="set-foot">TackT</div>
+      <a class="btn btn-primary" href="app/">Open TackT — Free</a>
+      <p class="cta-micro" style="margin:16px auto 0">Opens in your browser · works offline · no download</p>
     </div>
-  </div>
+  </section>
 
-  <div id="toast" class="toast hidden"></div>
-
-  <!-- ───────────── REWARD ───────────── -->
-  <div id="reward" class="reward-wrap hidden">
-    <div class="reward-card">
-      <div class="reward-burst">＋</div>
-      <div class="reward-pts"><span id="reward-num">0</span></div>
-      <div class="reward-lbl">points earned</div>
-      <div id="reward-parts" class="reward-parts"></div>
-      <div id="reward-msg" class="reward-msg"></div>
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap">
+      <a class="brand" href="/" style="font-size:1.05rem"><span class="mark" aria-hidden="true">◆</span> TackT</a>
+      <div class="links">
+        <a href="app/">Open the app</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="mailto:hello@gettackt.com?subject=TackT%20feedback">Contact &amp; feedback</a>
+      </div>
+      <span class="fam">Part of the KatchT family</span>
     </div>
-  </div>
+  </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+  <!-- sticky mobile CTA -->
+  <div class="sticky-cta" id="sticky"><a class="btn btn-primary" href="app/">Open TackT — Free</a></div>
+
+  <script>
+    // Reveal the sticky CTA only after the hero CTA scrolls out of view.
+    (function () {
+      var hero = document.getElementById('hero-cta');
+      var bar = document.getElementById('sticky');
+      if (!hero || !bar || !('IntersectionObserver' in window)) return;
+      new IntersectionObserver(function (entries) {
+        bar.classList.toggle('show', !entries[0].isIntersecting);
+      }, { rootMargin: '-10px 0px 0px 0px' }).observe(hero);
+    })();
+  </script>
 </body>
 </html>

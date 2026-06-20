@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1115" />
+  <title>TackT — Privacy Policy</title>
+  <meta name="description" content="TackT privacy policy — what the app stores, where, and how to delete it. No ads, no tracking, no selling your data." />
+  <link rel="icon" href="app/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="icon" href="app/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="app/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#0f1115;--surface:#171a21;--line:rgba(255,255,255,.08);
+      --gold1:#f5a623;--gold2:#ffc457;--green:#3ddc84;--t1:#f4f5f7;--t2:#aab1bd;--t3:#6b7280}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--t2);
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+      line-height:1.7;-webkit-font-smoothing:antialiased}
+    h1,h2{font-family:'Inter Tight',sans-serif;color:var(--t1);letter-spacing:-.02em;line-height:1.15}
+    a{color:var(--gold2)}
+    a:focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
+    .wrap{max-width:760px;margin:0 auto;padding:28px 22px 90px}
+    .nav{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:30px}
+    .brand{display:flex;align-items:center;gap:9px;font-family:'Inter Tight',sans-serif;font-weight:800;font-size:1.2rem;color:var(--t1)}
+    .mark{color:var(--gold1);filter:drop-shadow(0 0 9px rgba(245,166,35,.5))}
+    .back{font-size:.9rem;color:var(--t2)}
+    h1{font-size:clamp(1.9rem,5vw,2.5rem);font-weight:800;margin-bottom:8px}
+    .eff{color:var(--t3);font-size:.9rem;margin-bottom:8px}
+    h2{font-size:1.15rem;font-weight:700;margin:34px 0 12px}
+    p,li{margin-bottom:12px}
+    ul{padding-left:22px}
+    .short{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--green);
+      border-radius:12px;padding:18px 20px;margin:22px 0}
+    .short strong{color:var(--t1)}
+    code{background:#0c0e13;color:var(--gold2);padding:1px 6px;border-radius:5px;font-size:.88em}
+    .foot{color:var(--t3);font-size:.85rem;border-top:1px solid var(--line);margin-top:40px;padding-top:20px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav">
+      <a class="brand" href="/"><span class="mark" aria-hidden="true">◆</span> TackT</a>
+      <a class="back" href="/">&larr; Back to site</a>
+    </div>
+
+    <h1>Privacy Policy</h1>
+    <p class="eff">Effective: 20 June 2026</p>
+    <p>TackT ("the app", "we") is a phone-first workout tracker. This policy explains what data the app stores, where it lives, and how you can remove it. We've kept it plain on purpose.</p>
+
+    <div class="short">
+      <strong>The short version:</strong> TackT stores your account email and the workouts you log so they sync across your devices. We don't run ads, we don't use third-party tracking or advertising cookies, and we never sell or share your data. You can delete everything at any time.
+    </div>
+
+    <h2>What we store</h2>
+    <p>When you create an account and use TackT, we store:</p>
+    <ul>
+      <li><strong>Your account email and a securely hashed password</strong> — used only to sign you in and sync your data across your phone and computer.</li>
+      <li><strong>The workouts you log</strong> — dates, exercises, reps, sets, weight, distance, duration, and any notes you add, plus the derived points/streak/rank that come from those logs.</li>
+      <li><strong>Your settings</strong> — theme, quote toggle, and logging preferences.</li>
+    </ul>
+    <p>That's it. We do not collect your location, contacts, photos, health-app data, advertising identifiers, or any analytics about how you use the app.</p>
+
+    <h2>Where it's stored</h2>
+    <p>Your data is stored in a dedicated <strong>Supabase</strong> (PostgreSQL) project that we operate. Every row is protected by Row-Level Security, meaning your account can only ever read or write its own data. Some preferences and in-progress drafts are also cached locally on your device (in your browser's storage) so the app works offline.</p>
+
+    <h2>Who we share it with</h2>
+    <p>No one. We do not sell, rent, or share your personal data with advertisers, data brokers, or any third party. The only "third party" involved is our infrastructure provider (Supabase), which stores the data on our behalf and does not use it for its own purposes.</p>
+
+    <h2>Cookies &amp; tracking</h2>
+    <p>TackT does not use advertising cookies or third-party trackers. We use only the minimal local storage required to keep you signed in and to save your offline drafts.</p>
+
+    <h2>Your data, your control</h2>
+    <ul>
+      <li><strong>Export or correct:</strong> you can edit or delete any logged workout directly in the app.</li>
+      <li><strong>Delete everything:</strong> email <a href="mailto:privacy@gettackt.com?subject=Delete%20my%20TackT%20data">privacy@gettackt.com</a> from your account email and we'll permanently delete your account and all associated workout data.</li>
+    </ul>
+
+    <h2>Children</h2>
+    <p>TackT is not directed at children under 13, and we do not knowingly collect data from them.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If we change how we handle data, we'll update this page and the effective date above. Material changes will be noted in the app.</p>
+
+    <h2>Contact</h2>
+    <p>Questions, requests, or anything privacy-related: <a href="mailto:privacy@gettackt.com">privacy@gettackt.com</a>. General feedback: <a href="mailto:hello@gettackt.com">hello@gettackt.com</a>.</p>
+
+    <div class="foot">TackT · part of the KatchT family · <a href="/">gettackt.com</a></div>
+  </div>
+</body>
+</html>
