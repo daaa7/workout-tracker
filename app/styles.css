@@ -419,6 +419,7 @@ body.is-pro .pw-lock{display:none}
 .pro-tag{display:none;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--amber2);
   border:1px solid #3a2e16;background:rgba(245,166,35,.12);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
 body.is-pro .pro-tag{display:inline-flex}
+.pro-tag-sm{font-size:9px;letter-spacing:1px;padding:1px 6px;margin-left:5px}
 
 /* ───── Templates (Pro feature) ───── */
 #btn-templates{margin-left:auto;margin-right:14px;display:inline-flex;align-items:center;gap:5px}
