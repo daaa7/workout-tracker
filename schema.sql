@@ -105,3 +105,17 @@ create table if not exists public.wo_pro_interest (
 alter table public.wo_pro_interest enable row level security;
 create policy "wo_pro_interest_insert_own" on public.wo_pro_interest
   for insert to authenticated with check (auth.uid() = user_id);
+
+-- ── Templates (first Pro feature) ──
+-- A named focus-set of move abbreviations (e.g. "Push Day" = ["BP","OHP","DIP"]).
+-- Applying one filters the Log grid to just those moves. Full owner CRUD.
+create table if not exists public.wo_templates (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  name        text not null,
+  abbrs       jsonb not null default '[]',
+  created_at  timestamptz not null default now()
+);
+alter table public.wo_templates enable row level security;
+create policy "wo_templates_own" on public.wo_templates
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

@@ -526,7 +526,7 @@ async function persistOrder(list) {
 }
 function renderGrid() {
   const grid = $("ex-grid");
-  const list = sortedExercises();
+  const list = window.TPL_FILTER ? sortedExercises().filter((e) => window.TPL_FILTER.has(e.abbr)) : sortedExercises();
   if (!list.length) { grid.innerHTML = `<div class="day-empty">No moves yet — tap “Manage moves” to add yours.</div>`; return; }
   const kindOpts = (sel) => KINDS.map(([v, l]) => `<option value="${v}"${v === sel ? " selected" : ""}>${l.split(" ")[0]}</option>`).join("");
   grid.innerHTML = list.map((e) => `
@@ -1101,7 +1101,7 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v26";
+const APP_VERSION = "v27";
 let swReg = null, updating = false;
 function onUpdateReady() {
   $("update-bar")?.classList.remove("hidden");
