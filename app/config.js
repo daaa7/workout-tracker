@@ -7,8 +7,10 @@
 //   3. Copy "anon public" key → paste into `anonKey` below
 //   (then run the schema from schema.sql in that project's SQL editor)
 //
-// Currently pointing at KatchT-HQ (the wo_* tables already live there) so the
-// app works for testing right now. Swap these two values to migrate.
+// Points at the dedicated `workout-tracker` project (ref ebxyickzytkywkxlcrlf)
+// in a SEPARATE personal org — deliberately off the KatchT org so it stays free
+// even after KatchT goes paid. (KatchT-HQ once held copies of the wo_* tables;
+// those were empty leftovers and have been dropped — this app never used them.)
 // ───────────────────────────────────────────────────────────────
 window.WO_CONFIG = {
   url: "https://ebxyickzytkywkxlcrlf.supabase.co",

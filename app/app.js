@@ -6,6 +6,7 @@
 const SB = window.supabase.createClient(WO_CONFIG.url, WO_CONFIG.anonKey, {
   auth: { persistSession: true, autoRefreshToken: true, storageKey: "groove-auth" },
 });
+window.SB = SB; // exposed for pro.js (entitlement / paywall framework)
 
 const $ = (id) => document.getElementById(id);
 const el = (sel, root = document) => root.querySelector(sel);
