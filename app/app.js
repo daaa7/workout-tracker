@@ -1101,7 +1101,7 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v29";
+const APP_VERSION = "v30";
 let swReg = null, updating = false;
 function onUpdateReady() {
   const bar = $("update-bar");

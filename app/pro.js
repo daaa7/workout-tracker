@@ -51,19 +51,30 @@ window.Pro = (function () {
   }
 
   // ── Entitlement loading ───────────────────────────────────────
+  const cacheKey = (uid) => "wo_pro_" + uid;
+  function readCache(uid) { try { return JSON.parse(localStorage.getItem(cacheKey(uid))); } catch (e) { return null; } }
+  function writeCache(uid, d) { try { localStorage.setItem(cacheKey(uid), JSON.stringify({ tier: d.tier, status: d.status, expires_at: d.expires_at })); } catch (e) {} }
+
   async function load() {
     const sb = window.SB;
     let uid = null;
-    try { uid = (await sb.auth.getUser()).data.user?.id || null; } catch (e) {}
+    // getSession reads from local storage — instant + offline-safe (getUser hits the network).
+    try { uid = (await sb.auth.getSession()).data.session?.user?.id || null; } catch (e) {}
     if (!sb || !uid) { setTier("free", "active", null); state.ready = true; return; }
+    // Paint instantly from the last known tier so the PRO mark shows on cold start.
+    const cached = readCache(uid);
+    if (cached) setTier(cached.tier, cached.status, cached.expires_at);
+    // Then refresh from the server.
     try {
-      const { data } = await sb.from("wo_entitlements")
+      const { data, error } = await sb.from("wo_entitlements")
         .select("tier,status,expires_at").eq("user_id", uid).maybeSingle();
-      if (data) setTier(data.tier, data.status, data.expires_at);
-      else setTier("free", "active", null);
+      if (error) throw error;
+      const row = data || { tier: "free", status: "active", expires_at: null };
+      setTier(row.tier, row.status, row.expires_at);
+      writeCache(uid, row);
     } catch (e) {
-      // Table not created yet, or offline → safe default.
-      setTier("free", "active", null);
+      // offline / table missing → keep the cached value (or default free if none).
+      if (!cached) setTier("free", "active", null);
     }
     state.ready = true;
   }
