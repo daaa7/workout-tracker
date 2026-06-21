@@ -449,4 +449,11 @@ body.is-pro .pro-tag{display:inline-flex}
 .tpl-pick-ab{font-size:11px;color:var(--mut2);background:var(--bg2);border-radius:6px;padding:2px 7px}
 body.light .tpl-active-chip{background:linear-gradient(135deg,#fff7e8,#ffffff);border-color:#f0e3c4}
 body.light .tpl-item.on .tpl-apply{background:#fff6e4}
+
+/* ───── update "feel" — spinner while applying ───── */
+.update-bar.updating{justify-content:center;gap:10px}
+.upd-spin{width:13px;height:13px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;
+  animation:upd-rot .7s linear infinite;display:inline-block;vertical-align:-2px}
+@keyframes upd-rot{to{transform:rotate(360deg)}}
+.upd-btn:disabled{opacity:.65}
 body.light .pw-badge{background:linear-gradient(135deg,#fff7e8,#ffffff);border-color:#f0e3c4}

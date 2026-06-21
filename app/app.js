@@ -1052,7 +1052,7 @@ function bind() {
     ta.value = ""; toast("Thanks — we got it! 🙌");
   };
   $("set-update").onclick = checkForUpdate;
-  $("update-btn").onclick = applyUpdate;
+  $("update-btn").onclick = () => applyUpdate();
 
   $("log-date").value = todayStr();
   $("log-date").onchange = () => { const d = $("log-date").value || todayStr(); $("log-day-label").textContent = d === todayStr() ? "Today's workout" : prettyDate(d) + "'s workout"; };
@@ -1101,24 +1101,48 @@ function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.a
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v27";
+const APP_VERSION = "v28";
 let swReg = null, updating = false;
 function onUpdateReady() {
-  $("update-bar")?.classList.remove("hidden");
+  const bar = $("update-bar");
+  if (bar) {
+    bar.classList.remove("hidden", "updating");
+    bar.innerHTML = '<span>New version ready</span><button id="update-btn">Update now</button>';
+    $("update-btn").onclick = () => applyUpdate();
+  }
   const sub = $("set-update-sub"), btn = $("set-update");
   if (sub) sub.textContent = "Update available";
-  if (btn) { btn.textContent = "Update now"; btn.classList.add("ready"); }
+  if (btn) { btn.disabled = false; btn.textContent = "Update now"; btn.classList.add("ready"); }
 }
-function applyUpdate() {
+function applyUpdate(silent) {
   updating = true;
+  if (!silent) {
+    // visible feedback so the swap-and-reload pause is never silent
+    const bar = $("update-bar");
+    if (bar) { bar.classList.remove("hidden"); bar.classList.add("updating"); bar.innerHTML = '<span class="upd-spin"></span><span>Updating…</span>'; }
+    const sub = $("set-update-sub"), btn = $("set-update");
+    if (sub) sub.textContent = "Updating…";
+    if (btn) { btn.disabled = true; btn.classList.remove("ready"); btn.textContent = "Updating…"; }
+  }
   if (swReg && swReg.waiting) swReg.waiting.postMessage({ type: "SKIP_WAITING" }); // → controllerchange → reload
   else location.reload();
 }
 async function checkForUpdate() {
   if (!swReg) return location.reload();
-  toast("Checking…");
+  const sub = $("set-update-sub");
+  if (sub) sub.textContent = "Checking…";
   try { await swReg.update(); } catch (e) {}
-  setTimeout(() => { swReg.waiting ? onUpdateReady() : toast(`You're on the latest (${APP_VERSION}) ✓`); }, 900);
+  if (swReg.waiting) return onUpdateReady();              // already downloaded → ready now
+  const installing = swReg.installing;
+  if (installing) {                                        // downloading → show real progress (no false "latest")
+    if (sub) sub.textContent = "Downloading update…";
+    installing.addEventListener("statechange", () => {
+      if (installing.state === "installed" && navigator.serviceWorker.controller) onUpdateReady();
+    });
+    return;
+  }
+  if (sub) sub.textContent = "You're on the latest";
+  toast(`You're on the latest (${APP_VERSION}) ✓`);
 }
 function initSW() {
   if (!("serviceWorker" in navigator)) return;
@@ -1128,7 +1152,7 @@ function initSW() {
     // safe because nothing's been logged yet. (Mid-session updates still show the
     // banner below so we never swap files while you're logging.) This stops the
     // "Update available" banner from reappearing on every login.
-    if (reg.waiting && navigator.serviceWorker.controller) applyUpdate();
+    if (reg.waiting && navigator.serviceWorker.controller) applyUpdate(true);
     reg.addEventListener("updatefound", () => {
       const nw = reg.installing;
       if (nw) nw.addEventListener("statechange", () => {
