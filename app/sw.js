@@ -1,7 +1,7 @@
 // GROOVE service worker — caches the app shell so it opens offline.
 // Supabase API calls (cross-origin) are never cached; the app's own
 // offline queue handles writes while you're disconnected.
-const CACHE = "groove-v36";
+const CACHE = "groove-v37";
 const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./config.js", "./checkout.js", "./pro.js", "./manifest.json", "./icon.svg", "./vendor/supabase.js"];
 
 self.addEventListener("install", (e) => {

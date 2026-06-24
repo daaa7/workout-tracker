@@ -1189,7 +1189,7 @@ function showAuth() { $("reset").classList.add("hidden"); $("auth").classList.re
 function showApp() { $("reset").classList.add("hidden"); $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v36";
+const APP_VERSION = "v37";
 let swReg = null, updating = false;
 function onUpdateReady() {
   const bar = $("update-bar");
@@ -1221,20 +1221,33 @@ async function checkForUpdate() {
   if (sub) sub.textContent = "Checking…";
   try { await swReg.update(); } catch (e) {}
   if (swReg.waiting) return onUpdateReady();              // already downloaded → ready now
-  const installing = swReg.installing;
-  if (installing) {                                        // downloading → show real progress (no false "latest")
+  const watchInstall = (installing) => {                  // downloading → show real progress (no false "latest")
     if (sub) sub.textContent = "Downloading update…";
     installing.addEventListener("statechange", () => {
       if (installing.state === "installed" && navigator.serviceWorker.controller) onUpdateReady();
     });
-    return;
-  }
-  if (sub) sub.textContent = "You're on the latest";
-  toast(`You're on the latest (${APP_VERSION}) ✓`);
+  };
+  if (swReg.installing) return watchInstall(swReg.installing);
+  // swReg.update() can resolve a beat BEFORE the new worker shows up in
+  // .installing, so don't declare "latest" yet — watch for updatefound for a
+  // short window first. Without this the check often falsely reports "latest"
+  // even when a new version is about to install.
+  let found = false;
+  const onFound = () => { if (swReg.installing) { found = true; watchInstall(swReg.installing); } };
+  swReg.addEventListener("updatefound", onFound);
+  setTimeout(() => {
+    swReg.removeEventListener("updatefound", onFound);
+    if (found) return;
+    if (swReg.waiting) return onUpdateReady();
+    if (sub) sub.textContent = "You're on the latest";
+    toast(`You're on the latest (${APP_VERSION}) ✓`);
+  }, 3000);
 }
 function initSW() {
   if (!("serviceWorker" in navigator)) return;
-  navigator.serviceWorker.register("sw.js").then((reg) => {
+  // updateViaCache:"none" → the browser never serves sw.js from its HTTP
+  // cache during an update check, so new versions are detected reliably.
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
     swReg = reg;
     // A pending update from a previous session: apply it SILENTLY at startup —
     // safe because nothing's been logged yet. (Mid-session updates still show the
