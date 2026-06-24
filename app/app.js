@@ -11,6 +11,12 @@ const SB = window.supabase.createClient(WO_CONFIG.url, WO_CONFIG.anonKey, {
 });
 window.SB = SB; // exposed for pro.js (entitlement / paywall framework)
 
+// Did we open from a password-recovery email link? Read the hash synchronously
+// NOW, before supabase-js consumes it — used to show the "set a new password"
+// screen instead of dropping straight into the app.
+const IS_RECOVERY = /\btype=recovery\b/.test(location.hash) || /\btype=recovery\b/.test(location.search);
+let RECOVERING = IS_RECOVERY;
+
 const $ = (id) => document.getElementById(id);
 const el = (sel, root = document) => root.querySelector(sel);
 
@@ -157,6 +163,31 @@ async function signUp() {
   if (data?.user && !data.session) showAuthError("Account made — check your email to confirm, then Sign In.");
 }
 async function signOut() { await SB.auth.signOut(); location.reload(); }
+
+async function forgotPassword() {
+  const email = $("email").value.trim();
+  if (!email) return showAuthError("Enter your email above first, then tap Forgot password.");
+  const btn = $("btn-forgot"), orig = btn.textContent; btn.textContent = "Sending…"; btn.disabled = true;
+  // redirectTo must be on Supabase's allowed-redirects list (Auth → URL Configuration)
+  const { error } = await SB.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  btn.textContent = orig; btn.disabled = false;
+  if (error) return showAuthError(error.message);
+  toast("Reset link sent — open it on this device to set a new password.");
+}
+
+function showResetError(msg) { const e = $("reset-error"); e.textContent = msg; e.classList.remove("hidden"); }
+async function updatePassword() {
+  const pw = $("new-password").value;
+  if (!pw || pw.length < 6) return showResetError("Password must be at least 6 characters.");
+  const btn = $("btn-reset-save"); btn.textContent = "Saving…"; btn.disabled = true;
+  const { error } = await SB.auth.updateUser({ password: pw });
+  btn.textContent = "Save new password"; btn.disabled = false;
+  if (error) return showResetError(error.message);
+  RECOVERING = false;
+  $("new-password").value = "";
+  toast("Password updated ✓");
+  if (USER) { showApp(); loadData(); } else showAuth();
+}
 
 /* ════════════════════════════════════════════════════════════════
    DATA LOAD
@@ -1030,6 +1061,9 @@ function bind() {
   $("btn-signin").onclick = signIn;
   $("btn-signup").onclick = signUp;
   $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") signIn(); });
+  $("btn-forgot").onclick = forgotPassword;
+  $("btn-reset-save").onclick = updatePassword;
+  $("new-password").addEventListener("keydown", (e) => { if (e.key === "Enter") updatePassword(); });
   $("btn-signout").onclick = signOut;
 
   $("btn-settings").onclick = () => { const a = $("set-account"); if (a) a.textContent = USER?.email || "—"; openSheet("settings"); };
@@ -1092,7 +1126,10 @@ async function boot() {
   loadPrefs(); applyPrefs();
 
   // Auth listener first, so a session that resolves late still un-hides a screen.
-  SB.auth.onAuthStateChange((_e, sess) => {
+  SB.auth.onAuthStateChange((event, sess) => {
+    // Opened from a recovery link → let them set a new password (don't bounce to the app).
+    if (event === "PASSWORD_RECOVERY") { RECOVERING = true; USER = sess?.user || null; showReset(); return; }
+    if (RECOVERING) { USER = sess?.user || null; return; } // stay on the reset screen until they save
     const wasUser = USER;
     USER = sess?.user || null;
     if (USER && !wasUser) { showApp(); loadData(); }
@@ -1107,17 +1144,19 @@ async function boot() {
     const timeout = new Promise((res) => setTimeout(() => res(null), 2500));
     const result = await Promise.race([SB.auth.getSession(), timeout]);
     const session = result?.data?.session;
-    if (session?.user) { USER = session.user; showApp(); loadData(); }
+    if (RECOVERING) { USER = session?.user || null; showReset(); } // recovery link → set-new-password screen
+    else if (session?.user) { USER = session.user; showApp(); loadData(); }
     else showAuth();
   } catch (e) {
-    showAuth(); // never strand the user on a black screen
+    if (RECOVERING) showReset(); else showAuth(); // never strand the user on a black screen
   }
 }
-function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.add("hidden"); }
-function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
+function showReset() { $("auth").classList.add("hidden"); $("app").classList.add("hidden"); $("reset").classList.remove("hidden"); }
+function showAuth() { $("reset").classList.add("hidden"); $("auth").classList.remove("hidden"); $("app").classList.add("hidden"); }
+function showApp() { $("reset").classList.add("hidden"); $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v31";
+const APP_VERSION = "v32";
 let swReg = null, updating = false;
 function onUpdateReady() {
   const bar = $("update-bar");
