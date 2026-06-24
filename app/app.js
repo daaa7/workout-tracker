@@ -144,13 +144,32 @@ async function flushPending() {
    ════════════════════════════════════════════════════════════════ */
 function showAuthError(msg) { const e = $("auth-error"); e.textContent = msg; e.classList.remove("hidden"); }
 
+// The session supabase-js persisted (storageKey "groove-auth"). Used as a
+// fallback when getSession() races out, so a still-logged-in user isn't shown
+// the login screen just because a token refresh was slow after idle.
+function storedUser() {
+  try {
+    const raw = JSON.parse(localStorage.getItem("groove-auth"));
+    return raw?.user || raw?.currentSession?.user || null;
+  } catch (e) { return null; }
+}
+
 async function signIn() {
   const email = $("email").value.trim(), password = $("password").value;
   if (!email || !password) return showAuthError("Enter email and password.");
   $("btn-signin").textContent = "Signing in…";
   const { error } = await SB.auth.signInWithPassword({ email, password });
   $("btn-signin").textContent = "Sign In";
-  if (error) return showAuthError(error.message);
+  if (error) {
+    // A still-valid persisted session can make a concurrent sign-in fail
+    // ("invalid") even though we're actually authenticated. Before surfacing
+    // the error, check whether a good session exists and just go in.
+    try {
+      const { data } = await SB.auth.getSession();
+      if (data?.session?.user) { USER = data.session.user; showApp(); loadData(); return; }
+    } catch (_) {}
+    return showAuthError(error.message);
+  }
 }
 async function signUp() {
   const email = $("email").value.trim(), password = $("password").value;
@@ -1133,7 +1152,12 @@ async function boot() {
     const wasUser = USER;
     USER = sess?.user || null;
     if (USER && !wasUser) { showApp(); loadData(); }
-    else if (!USER) showAuth();
+    // Only a genuine sign-out should bounce to the login screen. A transient
+    // null-session event (a slow/failed token refresh after the app sits idle)
+    // used to call showAuth() here and strand a still-logged-in user on the
+    // login form — where re-login collides with the persisted session and
+    // looks "invalid". Leave the view as-is unless GoTrue truly signed out.
+    else if (event === "SIGNED_OUT") showAuth();
   });
 
   // getSession() reads localStorage and is normally instant, but on a cold
@@ -1146,9 +1170,18 @@ async function boot() {
     const session = result?.data?.session;
     if (RECOVERING) { USER = session?.user || null; showReset(); } // recovery link → set-new-password screen
     else if (session?.user) { USER = session.user; showApp(); loadData(); }
-    else showAuth();
+    else {
+      // getSession() may have raced out while a valid session sits in storage.
+      // Trust storage and show the app; the auth listener corrects on a real
+      // sign-out. Avoids flashing the login screen after idle.
+      const su = storedUser();
+      if (su) { USER = su; showApp(); loadData(); } else showAuth();
+    }
   } catch (e) {
-    if (RECOVERING) showReset(); else showAuth(); // never strand the user on a black screen
+    const su = !RECOVERING && storedUser();
+    if (RECOVERING) showReset();
+    else if (su) { USER = su; showApp(); loadData(); } // never strand the user on a black screen
+    else showAuth();
   }
 }
 function showReset() { $("auth").classList.add("hidden"); $("app").classList.add("hidden"); $("reset").classList.remove("hidden"); }
@@ -1156,7 +1189,7 @@ function showAuth() { $("reset").classList.add("hidden"); $("auth").classList.re
 function showApp() { $("reset").classList.add("hidden"); $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v33";
+const APP_VERSION = "v36";
 let swReg = null, updating = false;
 function onUpdateReady() {
   const bar = $("update-bar");
