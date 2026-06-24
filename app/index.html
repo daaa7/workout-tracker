@@ -426,7 +426,9 @@
   </div>
 
   <!-- Self-hosted so a cold home-screen launch never depends on a live CDN
-       (the service worker precaches it; loading it from a CDN was the black-screen bug). -->
+       (the service worker precaches it; loading it from a CDN was the black-screen bug).
+       Pinned to supabase-js 2.108.2 — same as the CDN's latest @2. Do NOT downgrade:
+       older builds (e.g. 2.45.x) have an auth-lock deadlock that hangs signIn/updateUser. -->
   <script src="vendor/supabase.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
