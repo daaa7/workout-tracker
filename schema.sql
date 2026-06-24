@@ -119,3 +119,16 @@ create table if not exists public.wo_templates (
 alter table public.wo_templates enable row level security;
 create policy "wo_templates_own" on public.wo_templates
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ── Guided Plans (Pro feature; Level 1 free) ──
+-- One active plan per user. Plan CONTENT is bundled in plans.js — this only
+-- stores which plan they're on and when they started (days map off start_date).
+create table if not exists public.wo_plan_state (
+  user_id     uuid primary key references auth.users(id) on delete cascade,
+  plan_id     text not null,
+  start_date  date not null,
+  updated_at  timestamptz not null default now()
+);
+alter table public.wo_plan_state enable row level security;
+create policy "wo_plan_state_own" on public.wo_plan_state
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

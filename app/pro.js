@@ -20,6 +20,8 @@ window.Pro = (function () {
     // Net-new, behind Pro:
     templates: { name: "Templates & weekly plans", pro: true, built: false,
                  blurb: "Save routines and one-tap log a planned day." },
+    plans:     { name: "Guided Plans", pro: true, built: true,
+                 blurb: "Follow proven multi-week programs — like the BJJ comeback plan — that load onto your Log in a tap. (Level 1 is free.)" },
 
     // Shipped today — listed so the rule is explicit. Do NOT gate:
     year_heatmap: { name: "Year heatmap",      pro: false, freeForever: true },
