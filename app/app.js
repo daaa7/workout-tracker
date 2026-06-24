@@ -5,6 +5,9 @@
 
 const SB = window.supabase.createClient(WO_CONFIG.url, WO_CONFIG.anonKey, {
   auth: { persistSession: true, autoRefreshToken: true, storageKey: "groove-auth" },
+  // Make sure the very first frame after a cold launch isn't a hung token refresh
+  // (which would leave both screens hidden = black). We get the cached session
+  // instantly and refresh in the background.
 });
 window.SB = SB; // exposed for pro.js (entitlement / paywall framework)
 
@@ -1087,21 +1090,34 @@ function bind() {
 async function boot() {
   bind();
   loadPrefs(); applyPrefs();
-  const { data: { session } } = await SB.auth.getSession();
+
+  // Auth listener first, so a session that resolves late still un-hides a screen.
   SB.auth.onAuthStateChange((_e, sess) => {
     const wasUser = USER;
     USER = sess?.user || null;
     if (USER && !wasUser) { showApp(); loadData(); }
     else if (!USER) showAuth();
   });
-  if (session?.user) { USER = session.user; showApp(); loadData(); }
-  else showAuth();
+
+  // getSession() reads localStorage and is normally instant, but on a cold
+  // home-screen launch a hung token refresh could leave BOTH screens hidden
+  // (= black screen). Race it against a short timeout so we always show
+  // *something* — the auth listener above corrects the view if it lands late.
+  try {
+    const timeout = new Promise((res) => setTimeout(() => res(null), 2500));
+    const result = await Promise.race([SB.auth.getSession(), timeout]);
+    const session = result?.data?.session;
+    if (session?.user) { USER = session.user; showApp(); loadData(); }
+    else showAuth();
+  } catch (e) {
+    showAuth(); // never strand the user on a black screen
+  }
 }
 function showAuth() { $("auth").classList.remove("hidden"); $("app").classList.add("hidden"); }
 function showApp() { $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); switchView("log"); }
 
 /* ───────── version + self-update ───────── */
-const APP_VERSION = "v30";
+const APP_VERSION = "v31";
 let swReg = null, updating = false;
 function onUpdateReady() {
   const bar = $("update-bar");
